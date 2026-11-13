@@ -1,8 +1,9 @@
 import { useLocalSearchParams } from 'expo-router';
 import PlaceholderScreen from '../../../components/PlaceholderScreen';
-import EventFormPreview from '../../../components/EventFormPreview';
+import EventEditor from '../../../components/EventEditor';
+import { parseEventId } from '../../../utils/eventForm';
 
 export default function EditEventScreen() {
   const { id } = useLocalSearchParams();
-  return <PlaceholderScreen title="Refine the details" description={`Preview the planner for event ${id}. Editing will be available soon.`}><EventFormPreview /></PlaceholderScreen>;
+  return <PlaceholderScreen title="Refine the details" description="Update your event information."><EventEditor key={String(id)} id={parseEventId(id)} /></PlaceholderScreen>;
 }
