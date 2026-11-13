@@ -85,3 +85,26 @@ restarting the app, reading them back, and deleting an event to verify cascade.
 Run `node scripts/test-database.cjs` with Node 24+ for SQL and repository checks
 using real SQLite through a test adapter (not the Expo native runtime).
 Run `node scripts/test-event-form.cjs` for form validation and value conversion checks.
+
+## Home dashboard
+
+Home reads the events repository on each navigation focus. The same SQLite read
+drives all statistics and the five nearest upcoming event cards. Past events have
+a scheduled start before the current local minute; there is no manual completion
+status. An event starting in the current minute is upcoming. Date-only legacy
+events remain upcoming through their scheduled day. Missing/invalid dates count
+toward the total and are flagged separately, rather than classified as past.
+Upcoming cards sort by local date/time ascending, then by ID for equal starts.
+Run `node scripts/test-dashboard.cjs` for SQLite-backed dashboard checks.
+
+## My events search and filters
+
+My events loads SQLite rows on navigation focus and filters that local snapshot
+without network access. Search matches literal, case-insensitive substrings in
+titles or locations. Search, category, and upcoming/past conditions combine.
+Categories come from saved records, with whitespace/case variants grouped together.
+Results sort by scheduled start ascending, then ID, with undated records last in
+All events. Upcoming/past use the same scheduling rules as Home. Clear filters
+resets search, category, and period together. Filters stay selected when returning
+from event details or edits; the underlying SQLite data is refreshed.
+Run `node scripts/test-event-filters.cjs` for SQLite-backed filtering checks.
