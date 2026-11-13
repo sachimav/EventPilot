@@ -4,12 +4,13 @@
 The root layout waits for initialization before mounting the router. Failures
 show a retry button; failed opens close their connection and can be retried.
 Event list, create, edit, details, and delete screens use the repositories. Lists
-reload whenever their screen regains focus. Task and budget screens remain previews.
+reload whenever their screen regains focus. Task Manager also uses SQLite; the
+budget screen remains a preview.
 
 The `eventpilot.db` file persists locally across app restarts. No network or
 server is required. WAL mode is enabled, along with foreign keys on every open.
 
-## Schema (version 2)
+## Schema (version 3)
 
 All four tables have an auto-incrementing integer `id` primary key and UTC
 `created_at` / `updated_at` timestamps. Repository updates refresh `updated_at`.
@@ -17,7 +18,7 @@ All four tables have an auto-incrementing integer `id` primary key and UTC
 | Table | Fields |
 | --- | --- |
 | Events | Required `name`; optional `date`, `time`; `category` (default `Other`); `location`, `notes`; nonnegative integer `budget_cents`; three-character `currency` (default `LKR`) |
-| Tasks | Required `event_id`, `title`; `notes`, optional `due_at`; `completed` as SQLite integer 0 or 1 |
+| Tasks | Required `event_id`, `title`; `notes`, optional `due_at`; `priority` as low/medium/high (default medium); `completed` as SQLite integer 0 or 1 |
 | Expenses | Required `event_id`, `title`, nonnegative integer `amount_cents`; `category`, `notes`, optional `incurred_at` |
 | Activities | Required `event_id`, `title`; optional `starts_at`, `ends_at`; `location`, `notes` |
 
@@ -108,3 +109,45 @@ All events. Upcoming/past use the same scheduling rules as Home. Clear filters
 resets search, category, and period together. Filters stay selected when returning
 from event details or edits; the underlying SQLite data is refreshed.
 Run `node scripts/test-event-filters.cjs` for SQLite-backed filtering checks.
+
+## Task Manager
+
+Tasks support create, inline edit, details, delete confirmation, completion and
+reopening. The form requires an existing event, title, deadline date/time, and
+priority (default Medium). Description maps to `notes` and is optional. Deadline
+pickers use local time; `due_at` stores a UTC ISO timestamp and displays locally.
+Existing tasks without deadlines remain visible and can be completed or deleted;
+editing asks the user to provide a deadline. Version 3 preserves existing tasks
+and gives them Medium priority, enforced by a SQLite CHECK constraint.
+
+Event, priority, and completion filters combine locally on SQLite records.
+Pending tasks sort first, then by deadline, with unset deadlines last in each
+status. Lists reload on navigation focus and after successful mutations. Failed
+saves retain form entries, and failed completion/deletion actions show errors.
+Deleting a parent event cascades to its tasks. No network connection is needed.
+Run `node scripts/test-task-manager.cjs` for form and filtering checks; the database
+checks also cover priority constraints, migration, and persistence after reopening.
+
+## Smart task deadlines
+
+`src/utils/taskDeadlines.ts` provides reusable status, counting, and sorting
+functions. All accept an explicit current timestamp for deterministic tests.
+Completed takes precedence. Incomplete tasks are Overdue if their deadline is
+strictly before now; Urgent if due now through exactly 48 elapsed hours from now;
+and Upcoming otherwise. Missing/invalid legacy deadlines are Upcoming and display
+"No deadline set". Stored UTC timestamps and offset timestamps are compared as
+instants against the device clock, without date-only rounding or UTC/local shifts.
+
+Task Manager displays colored, labeled badges and four status counts. Counts honor
+event and priority selections, while ignoring the status filter so every bucket
+remains visible. Status filters include Overdue, Urgent, Upcoming, Completed, and
+the existing Pending filter (all incomplete tasks). Sorting puts Overdue first,
+then Urgent, Upcoming, and Completed, with earliest deadlines first per group,
+missing/invalid deadlines last, and ID as a stable tie-breaker.
+
+One screen clock refreshes each second while focused and active, and immediately
+on navigation focus or app resume. It does not poll SQLite or store derived status.
+An unsaved editor remains mounted if its task stops matching a live status filter.
+No notifications service or backend is involved.
+Run `node scripts/test-task-deadlines.cjs` for boundary, timezone/DST, counting,
+filtering, and ordering checks.

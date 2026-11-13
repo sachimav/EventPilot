@@ -54,6 +54,10 @@ export const migrations = [
   ALTER TABLE Events ADD COLUMN category TEXT NOT NULL DEFAULT 'Other' CHECK (length(trim(category)) > 0);
   ALTER TABLE Events ADD COLUMN time TEXT;
   `,
+  `
+  ALTER TABLE Tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high'));
+  CREATE INDEX tasks_due_at ON Tasks(due_at);
+  `,
 ] as const;
 
 export const SCHEMA_VERSION = migrations.length;

@@ -61,12 +61,18 @@ function loadModules() {
   assert.equal((await events.getById(id)).category, 'Conference');
   assert.equal((await events.getById(id)).time, '18:30');
   assert.equal((await events.list()).length, 1);
+  const taskId = await tasks.create({ event_id: id, title: 'Book venue', notes: 'Call the venue', due_at: '2026-12-01T10:00:00.000Z', priority: 'high' });
+  assert.equal((await tasks.getById(taskId)).priority, 'high');
+  assert.equal((await tasks.getById(taskId)).completed, 0);
+  assert.equal(await tasks.update(taskId, { completed: 1, notes: 'Booked' }), true);
+  assert.equal((await tasks.list()).length, 1);
+  await assert.rejects(tasks.update(taskId, { priority: 'urgent' }));
   for (const repo of [tasks, expenses, activities]) {
     const extra = repo === expenses ? { amount_cents: 123 } : {};
     const child = await repo.create({ event_id: id, title: 'Original', ...extra });
     assert.equal(await repo.update(child, { title: 'Updated' }), true);
     assert.equal((await repo.getById(child)).title, 'Updated');
-    assert.equal((await repo.listByEvent(id)).length, 1);
+    assert.equal((await repo.listByEvent(id)).length, repo === tasks ? 2 : 1);
     assert.equal(await repo.delete(child), true);
     assert.equal(await repo.getById(child), null);
     await repo.create({ event_id: id, title: 'Cascade me', ...extra });
@@ -85,6 +91,10 @@ function loadModules() {
   api = loadModules();
   assert.equal((await api.events.getById(id)).notes, 'Saved');
   assert.equal((await api.events.getById(id)).budget_cents, 12345);
+  assert.equal((await api.tasks.getById(taskId)).completed, 1);
+  assert.equal((await api.tasks.getById(taskId)).notes, 'Booked');
+  assert.equal((await api.tasks.getById(taskId)).priority, 'high');
+  assert.equal((await api.tasks.getById(taskId)).due_at, '2026-12-01T10:00:00.000Z');
   await api.events.update(id, { category: 'Birthday', time: '19:45' });
   assert.equal((await api.events.getById(id)).category, 'Birthday');
   assert.equal((await api.events.getById(id)).time, '19:45');
@@ -108,8 +118,9 @@ function loadModules() {
   await assert.rejects(api.initializeDatabase(), /newer version/);
   // Simulate an existing v1 installation and verify its records survive upgrade.
   const old = new DatabaseSync(filename);
-  old.exec('PRAGMA user_version = 1; ALTER TABLE Events DROP COLUMN category; ALTER TABLE Events DROP COLUMN time;');
+  old.exec('PRAGMA user_version = 1; ALTER TABLE Events DROP COLUMN category; ALTER TABLE Events DROP COLUMN time; DROP INDEX tasks_due_at; ALTER TABLE Tasks DROP COLUMN priority;');
   old.prepare('INSERT INTO Events (name, notes, budget_cents) VALUES (?, ?, ?)').run('Legacy event', 'Keep me', 999);
+  old.exec("INSERT INTO Tasks (event_id, title, completed) SELECT id, 'Legacy task', 1 FROM Events LIMIT 1");
   old.close();
   api = loadModules();
   const legacy = (await api.events.list())[0];
@@ -118,6 +129,8 @@ function loadModules() {
   assert.equal(legacy.budget_cents, 999);
   assert.equal(legacy.category, 'Other');
   assert.equal(legacy.time, null);
+  assert.equal((await api.tasks.list())[0].priority, 'medium');
+  assert.equal((await api.tasks.list())[0].completed, 1);
   console.log('Database checks passed: CRUD, constraints, cascade, reopen, migration rollback, retry, version guard.');
 })().finally(() => {
   try { connection?.close(); } catch {}

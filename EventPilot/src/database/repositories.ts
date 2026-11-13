@@ -7,8 +7,10 @@ export interface Event extends RecordBase {
   budget_cents: number; currency: string;
   category: string; time: string | null;
 }
+export type TaskPriority = 'low' | 'medium' | 'high';
 export interface Task extends RecordBase {
   event_id: number; title: string; notes: string; due_at: string | null; completed: 0 | 1;
+  priority: TaskPriority;
 }
 export interface Expense extends RecordBase {
   event_id: number; title: string; amount_cents: number; category: string;
@@ -99,6 +101,12 @@ export const events = {
     return db.getAllAsync<Event>('SELECT * FROM Events ORDER BY id DESC');
   },
 };
-export const tasks = childRepository<Task, CreateTask>('Tasks', ['event_id', 'title', 'notes', 'due_at', 'completed']);
+export const tasks = {
+  ...childRepository<Task, CreateTask>('Tasks', ['event_id', 'title', 'notes', 'due_at', 'completed', 'priority']),
+  async list(): Promise<Task[]> {
+    const db = await initializeDatabase();
+    return db.getAllAsync<Task>('SELECT * FROM Tasks ORDER BY id ASC');
+  },
+};
 export const expenses = childRepository<Expense, CreateExpense>('Expenses', ['event_id', 'title', 'amount_cents', 'category', 'incurred_at', 'notes']);
 export const activities = childRepository<Activity, CreateActivity>('Activities', ['event_id', 'title', 'starts_at', 'ends_at', 'location', 'notes']);

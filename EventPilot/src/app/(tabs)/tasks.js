@@ -1,6 +1,6 @@
 import PlaceholderScreen from '../../components/PlaceholderScreen';
-import EmptyState from '../../components/EmptyState';
+import TaskManager from '../../components/TaskManager';
 
 export default function TasksScreen() {
-  return <PlaceholderScreen title="One detail at a time" description="A clear space for all your event to-dos."><EmptyState icon="checkbox-outline" title="Your checklist starts here" description="Task planning is coming soon. For now, enjoy a little breathing room." /></PlaceholderScreen>;
+  return <PlaceholderScreen title="Task Manager" description="One detail at a time. Plan and complete your event to-dos."><TaskManager /></PlaceholderScreen>;
 }

@@ -6,12 +6,12 @@ import { colors, spacing } from '../constants/theme';
 import { dateString, timeString, validDate } from '../utils/eventForm';
 
 export interface DateTimeFieldProps {
-  mode: 'date' | 'time'; value: string; onChange: (value: string) => void; error?: string; disabled?: boolean;
+  mode: 'date' | 'time'; value: string; onChange: (value: string) => void; error?: string; disabled?: boolean; label?: string;
 }
 
-export default function EventDateTimeField({ mode, value, onChange, error, disabled }: DateTimeFieldProps) {
+export default function EventDateTimeField({ mode, value, onChange, error, disabled, label: customLabel }: DateTimeFieldProps) {
   const [open, setOpen] = useState(false);
-  const label = mode === 'date' ? 'Date' : 'Time';
+  const label = customLabel ?? (mode === 'date' ? 'Date' : 'Time');
   const selected = mode === 'date' && validDate(value) ? new Date(`${value}T12:00:00`) : new Date();
   if (mode === 'time' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
     const [hours, minutes] = value.split(':').map(Number);

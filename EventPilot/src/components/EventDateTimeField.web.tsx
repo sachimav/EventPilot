@@ -3,9 +3,9 @@ import { Text, View } from 'react-native';
 import { colors, spacing } from '../constants/theme';
 import type { DateTimeFieldProps } from './EventDateTimeField';
 
-export default function EventDateTimeField({ mode, value, onChange, error, disabled }: DateTimeFieldProps) {
+export default function EventDateTimeField({ mode, value, onChange, error, disabled, label: customLabel }: DateTimeFieldProps) {
   const id = useId();
-  const label = mode === 'date' ? 'Date' : 'Time';
+  const label = customLabel ?? (mode === 'date' ? 'Date' : 'Time');
   return <View style={{ gap: spacing.sm }}>
     <label htmlFor={id} style={{ color: colors.heading, fontWeight: 600 }}>{label} *</label>
     <input id={id} type={mode} value={value} required disabled={disabled} aria-invalid={!!error}
