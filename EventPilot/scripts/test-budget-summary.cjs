@@ -1,0 +1,88 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const ts = require('typescript');
+const { DatabaseSync } = require('node:sqlite');
+function load(file) {
+  const { outputText } = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+  });
+  const context = { exports: {}, require: (id) => load(path.resolve(path.dirname(file), `${id}.ts`)) };
+  vm.runInNewContext(outputText, context);
+  return context.exports;
+}
+const { migrations } = load(path.join(__dirname, '../src/database/schema.ts'));
+const { summarizeBudget, formatLkr, amountPercentage } = load(path.join(__dirname, '../src/utils/budgetManager.ts'));
+const db = new DatabaseSync(':memory:');
+try {
+  db.exec('PRAGMA foreign_keys = ON');
+  for (const sql of migrations) db.exec(sql);
+  db.exec("INSERT INTO Events (name, budget_cents) VALUES ('Wedding', 100000), ('Conference', 200000)");
+  const snapshot = () => summarizeBudget(db.prepare('SELECT * FROM Events WHERE id = 1').get(), db.prepare('SELECT * FROM Expenses').all());
+  let result = snapshot();
+  assert.equal(result.budget, 100000n);
+  assert.equal(result.remaining, 100000n);
+  assert.equal(result.actual, 0n);
+  assert.equal(result.estimated, 0n);
+  assert.equal(result.utilizationPercent, 0);
+  assert.equal(result.categories.length, 0);
+  const insert = db.prepare('INSERT INTO Expenses (event_id, title, category, estimated_cents, amount_cents) VALUES (?, ?, ?, ?, ?)');
+  insert.run(1, 'Venue', 'Venue', 50000, 60000);
+  insert.run(1, 'Catering', 'Food', 30000, 20000);
+  insert.run(2, 'Other event', 'Venue', 900000, 900000);
+  result = snapshot();
+  assert.equal(result.estimated, 80000n);
+  assert.equal(result.actual, 80000n);
+  assert.equal(result.remaining, 20000n);
+  assert.equal(result.utilizationPercent, 80);
+  assert.equal(result.progressPercent, 80);
+  assert.equal(result.overspent, false);
+  const venue = result.categories.find((group) => group.category === 'Venue');
+  assert.equal(venue.variance, 10000n);
+  assert.equal(venue.overEstimate, true);
+  assert.equal(venue.actualPercent, 100);
+  assert.equal(venue.estimatedPercent, 83.33);
+  const food = result.categories.find((group) => group.category === 'Food');
+  assert.equal(food.variance, -10000n);
+  assert.equal(food.overEstimate, false);
+  assert.equal(food.actualPercent, 33.33);
+  // Fresh SQLite reads follow event-budget edits as well as expense changes.
+  db.exec('UPDATE Events SET budget_cents = 80000 WHERE id = 1');
+  result = snapshot();
+  assert.equal(result.remaining, 0n);
+  assert.equal(result.utilizationPercent, 100);
+  assert.equal(result.overspent, false);
+  db.exec('UPDATE Events SET budget_cents = 50000 WHERE id = 1');
+  result = snapshot();
+  assert.equal(result.remaining, -30000n);
+  assert.equal(result.overspentAmount, 30000n);
+  assert.equal(result.overspent, true);
+  assert.equal(result.estimatedOverBudget, true);
+  assert.equal(result.utilizationPercent, 160);
+  assert.equal(result.progressPercent, 100);
+  assert.equal(formatLkr(result.remaining), '-Rs. 300.00');
+  assert.equal(formatLkr(-1), '-Rs. 0.01');
+  db.exec('UPDATE Events SET budget_cents = 0 WHERE id = 1');
+  result = snapshot();
+  assert.equal(result.utilizationPercent, null);
+  assert.equal(result.progressPercent, 0);
+  assert.equal(result.overspentAmount, 80000n);
+  db.exec('DELETE FROM Expenses WHERE event_id = 1');
+  result = snapshot();
+  assert.equal(result.utilizationPercent, null);
+  assert.equal(result.remaining, 0n);
+  assert.equal(result.overspent, false);
+  insert.run(1, 'Zero amounts', '', 0, 0);
+  result = snapshot();
+  assert.equal(result.categories[0].actualPercent, 0);
+  assert.equal(result.categories[0].estimatedPercent, 0);
+  assert.equal(result.categories[0].category, 'Uncategorized');
+  assert.equal(amountPercentage(2n, 3n), 66.67);
+  assert.equal(amountPercentage(0n, 0n), 0);
+  const huge = summarizeBudget({ id: 1, budget_cents: 1 }, [1, 2].map((id) => ({ id, event_id: 1, category: 'Venue', estimated_cents: Number.MAX_SAFE_INTEGER, amount_cents: Number.MAX_SAFE_INTEGER })));
+  assert.equal(huge.remaining, 1n - 2n * BigInt(Number.MAX_SAFE_INTEGER));
+  assert.equal(huge.progressPercent, 100);
+  assert.equal(Number.isFinite(huge.utilizationPercent), true);
+  console.log('Budget summary checks passed: SQLite totals/event isolation, remaining balance, percentages, zero budgets, empty expenses, over/exact budget, category scale/variance, rounding, and large totals.');
+} finally { db.close(); }

@@ -78,6 +78,12 @@ function loadModules() {
     await repo.create({ event_id: id, title: 'Cascade me', ...extra });
     await assert.rejects(repo.create({ event_id: 99999, title: 'Orphan', ...extra }));
   }
+  const expenseId = await expenses.create({ event_id: id, title: 'Venue deposit', category: 'Venue', estimated_cents: 50000, amount_cents: 25000 });
+  assert.equal((await expenses.getById(expenseId)).estimated_cents, 50000);
+  assert.equal(await expenses.update(expenseId, { estimated_cents: 60000, amount_cents: 30000, category: 'Hall' }), true);
+  await assert.rejects(expenses.update(expenseId, { estimated_cents: -1 }));
+  await assert.rejects(expenses.update(expenseId, { amount_cents: -1 }));
+  await assert.rejects(expenses.update(expenseId, { estimated_cents: 1.5 }));
   await assert.rejects(events.create({ name: ' ' }));
   await assert.rejects(events.update(id, { budget_cents: -1 }));
   await assert.rejects(expenses.create({ event_id: id, title: 'Bad', amount_cents: 1.5 }));
@@ -91,6 +97,9 @@ function loadModules() {
   api = loadModules();
   assert.equal((await api.events.getById(id)).notes, 'Saved');
   assert.equal((await api.events.getById(id)).budget_cents, 12345);
+  assert.equal((await api.expenses.getById(expenseId)).estimated_cents, 60000);
+  assert.equal((await api.expenses.getById(expenseId)).amount_cents, 30000);
+  assert.equal((await api.expenses.getById(expenseId)).category, 'Hall');
   assert.equal((await api.tasks.getById(taskId)).completed, 1);
   assert.equal((await api.tasks.getById(taskId)).notes, 'Booked');
   assert.equal((await api.tasks.getById(taskId)).priority, 'high');
@@ -118,9 +127,10 @@ function loadModules() {
   await assert.rejects(api.initializeDatabase(), /newer version/);
   // Simulate an existing v1 installation and verify its records survive upgrade.
   const old = new DatabaseSync(filename);
-  old.exec('PRAGMA user_version = 1; ALTER TABLE Events DROP COLUMN category; ALTER TABLE Events DROP COLUMN time; DROP INDEX tasks_due_at; ALTER TABLE Tasks DROP COLUMN priority;');
+  old.exec('PRAGMA user_version = 1; ALTER TABLE Events DROP COLUMN category; ALTER TABLE Events DROP COLUMN time; DROP INDEX tasks_due_at; ALTER TABLE Tasks DROP COLUMN priority; ALTER TABLE Expenses DROP COLUMN estimated_cents;');
   old.prepare('INSERT INTO Events (name, notes, budget_cents) VALUES (?, ?, ?)').run('Legacy event', 'Keep me', 999);
   old.exec("INSERT INTO Tasks (event_id, title, completed) SELECT id, 'Legacy task', 1 FROM Events LIMIT 1");
+  old.exec("INSERT INTO Expenses (event_id, title, amount_cents, category) SELECT id, 'Legacy expense', 456, 'Venue' FROM Events LIMIT 1");
   old.close();
   api = loadModules();
   const legacy = (await api.events.list())[0];
@@ -131,6 +141,8 @@ function loadModules() {
   assert.equal(legacy.time, null);
   assert.equal((await api.tasks.list())[0].priority, 'medium');
   assert.equal((await api.tasks.list())[0].completed, 1);
+  assert.equal((await api.expenses.list())[0].estimated_cents, 456);
+  assert.equal((await api.expenses.list())[0].amount_cents, 456);
   console.log('Database checks passed: CRUD, constraints, cascade, reopen, migration rollback, retry, version guard.');
 })().finally(() => {
   try { connection?.close(); } catch {}

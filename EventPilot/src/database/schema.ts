@@ -58,6 +58,10 @@ export const migrations = [
   ALTER TABLE Tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high'));
   CREATE INDEX tasks_due_at ON Tasks(due_at);
   `,
+  `
+  ALTER TABLE Expenses ADD COLUMN estimated_cents INTEGER NOT NULL DEFAULT 0 CHECK (typeof(estimated_cents) = 'integer' AND estimated_cents >= 0);
+  UPDATE Expenses SET estimated_cents = amount_cents;
+  `,
 ] as const;
 
 export const SCHEMA_VERSION = migrations.length;

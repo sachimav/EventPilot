@@ -1,7 +1,6 @@
 import PlaceholderScreen from '../../components/PlaceholderScreen';
-import EmptyState from '../../components/EmptyState';
-import StatCard from '../../components/StatCard';
+import BudgetManager from '../../components/BudgetManager';
 
 export default function BudgetScreen() {
-  return <PlaceholderScreen title="Plan with confidence" description="Give every great idea a little room in your budget."><StatCard label="Planned budget" value="—" caption="Budget preview · no expenses recorded" icon="wallet-outline" /><EmptyState icon="receipt-outline" title="A fresh start for your budget" description="Your expenses and spending breakdown will appear here when budget planning is available." /></PlaceholderScreen>;
+  return <PlaceholderScreen title="Budget Manager" description="Plan with confidence. Compare estimates with actual spending."><BudgetManager /></PlaceholderScreen>;
 }

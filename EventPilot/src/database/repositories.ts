@@ -14,7 +14,7 @@ export interface Task extends RecordBase {
 }
 export interface Expense extends RecordBase {
   event_id: number; title: string; amount_cents: number; category: string;
-  incurred_at: string | null; notes: string;
+  incurred_at: string | null; notes: string; estimated_cents: number;
 }
 export interface Activity extends RecordBase {
   event_id: number; title: string; starts_at: string | null; ends_at: string | null;
@@ -108,5 +108,11 @@ export const tasks = {
     return db.getAllAsync<Task>('SELECT * FROM Tasks ORDER BY id ASC');
   },
 };
-export const expenses = childRepository<Expense, CreateExpense>('Expenses', ['event_id', 'title', 'amount_cents', 'category', 'incurred_at', 'notes']);
+export const expenses = {
+  ...childRepository<Expense, CreateExpense>('Expenses', ['event_id', 'title', 'amount_cents', 'estimated_cents', 'category', 'incurred_at', 'notes']),
+  async list(): Promise<Expense[]> {
+    const db = await initializeDatabase();
+    return db.getAllAsync<Expense>('SELECT * FROM Expenses ORDER BY id DESC');
+  },
+};
 export const activities = childRepository<Activity, CreateActivity>('Activities', ['event_id', 'title', 'starts_at', 'ends_at', 'location', 'notes']);

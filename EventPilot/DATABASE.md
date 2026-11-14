@@ -4,13 +4,13 @@
 The root layout waits for initialization before mounting the router. Failures
 show a retry button; failed opens close their connection and can be retried.
 Event list, create, edit, details, and delete screens use the repositories. Lists
-reload whenever their screen regains focus. Task Manager also uses SQLite; the
-budget screen remains a preview.
+reload whenever their screen regains focus. Task Manager and Budget Manager also
+use SQLite and refresh on navigation focus and after successful mutations.
 
 The `eventpilot.db` file persists locally across app restarts. No network or
 server is required. WAL mode is enabled, along with foreign keys on every open.
 
-## Schema (version 3)
+## Schema (version 4)
 
 All four tables have an auto-incrementing integer `id` primary key and UTC
 `created_at` / `updated_at` timestamps. Repository updates refresh `updated_at`.
@@ -19,7 +19,7 @@ All four tables have an auto-incrementing integer `id` primary key and UTC
 | --- | --- |
 | Events | Required `name`; optional `date`, `time`; `category` (default `Other`); `location`, `notes`; nonnegative integer `budget_cents`; three-character `currency` (default `LKR`) |
 | Tasks | Required `event_id`, `title`; `notes`, optional `due_at`; `priority` as low/medium/high (default medium); `completed` as SQLite integer 0 or 1 |
-| Expenses | Required `event_id`, `title`, nonnegative integer `amount_cents`; `category`, `notes`, optional `incurred_at` |
+| Expenses | Required `event_id`, `title`, nonnegative integer `amount_cents` (actual); nonnegative integer `estimated_cents`; `category`, `notes`, optional `incurred_at` |
 | Activities | Required `event_id`, `title`; optional `starts_at`, `ends_at`; `location`, `notes` |
 
 Every child `event_id` references `Events.id` with `ON DELETE CASCADE`, so deleting
@@ -151,3 +151,44 @@ An unsaved editor remains mounted if its task stops matching a live status filte
 No notifications service or backend is involved.
 Run `node scripts/test-task-deadlines.cjs` for boundary, timezone/DST, counting,
 filtering, and ordering checks.
+
+## Budget Manager
+
+Select an event to create, edit, or delete its expenses. Every form requires
+category, description, estimated amount, and actual amount. Zero amounts are valid;
+negative, blank, nonnumeric, overly large, or more-than-two-decimal amounts are
+rejected. Enter bare rupee amounts (e.g. `1234.50`), without separators or symbols.
+Description maps to the existing `title` field, actual to `amount_cents`, and
+estimated to `estimated_cents`. Existing notes are preserved and displayed.
+
+Version 4 adds `estimated_cents` with a nonnegative integer CHECK constraint and
+backfills existing expenses with their recorded actual amount as the estimate.
+No existing expense is deleted or reset. Category and event totals derive from
+the selected event's SQLite expenses. Case and surrounding whitespace variations
+in category names are grouped together; legacy empty categories are Uncategorized.
+All Budget Manager amounts are LKR, displayed as `Rs. 1,234.50`. Totals use BigInt
+minor units to avoid rounding even when their sum exceeds JS safe integer range.
+
+Deletion requires confirmation. Failed saves preserve entries, database errors
+offer retry, and event selection is locked while editing to protect the form.
+Deleting an event cascades to its expenses. All operations work offline.
+Run `node scripts/test-budget-manager.cjs` for amount, category totals, isolation,
+edit/delete, and constraint checks. Database tests also verify persistence after
+reopening and non-destructive migration of legacy expenses.
+
+### Financial summaries
+
+`summarizeBudget` combines the event's stored `budget_cents` with its SQLite
+expense rows. Remaining budget is event budget minus actual expenses; negative
+balances and estimated/actual overspending are highlighted. Utilization is actual
+expenses divided by budget, rounded to two decimal places. The numeric percentage
+may exceed 100%, while the accessible progress bar is capped at 100%. For zero
+budgets, utilization is unavailable and the bar is empty; positive spending still
+shows an overspending warning. No expenses produce zero totals and full remaining
+budget. "Edit event budget" uses the existing event editor and refreshes on return.
+
+Category comparisons show estimated/actual totals, the difference from the estimate,
+and paired bars sharing a common maximum across all categories. Calculations use
+integer/BigInt cents; display-only percentages use numbers. Summaries are memoized
+and layouts wrap for narrow screens. Run `node scripts/test-budget-summary.cjs`
+for SQLite-backed financial summary and edge-case checks.
