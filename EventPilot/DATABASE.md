@@ -192,3 +192,45 @@ and paired bars sharing a common maximum across all categories. Calculations use
 integer/BigInt cents; display-only percentages use numbers. Summaries are memoized
 and layouts wrap for narrow screens. Run `node scripts/test-budget-summary.cjs`
 for SQLite-backed financial summary and edge-case checks.
+
+## Event Timeline
+
+The event details Timeline link opens a schedule for that event. Activities support
+add, inline edit, and confirmed delete using the existing Activities repository.
+The form requires a title, date, start time, and end time; description is optional
+and maps to `notes`. Start/end use the same local date, with end strictly after
+start (equal times and overnight ranges are rejected). Nonexistent local times
+are rejected instead of silently shifting the schedule. Overlap requires explicit
+confirmation as described below.
+
+Date/time inputs convert to UTC ISO `starts_at` / `ends_at`, which already carry
+the activity date, so no schema migration is needed. The timeline sorts by start
+instant then ID, groups by local calendar date, and displays local time ranges.
+Legacy activities without a valid start remain visible under Needs scheduling,
+where editing supplies the required date/time fields. Existing locations are
+preserved and displayed. New activities default to the event date when available.
+
+Schedules reload on navigation focus and after successful changes. Failed saves
+retain form entries; failed reads/deletes have retry handling. Missing events and
+events with no activities have separate empty states. Foreign keys prevent orphan
+activities and cascade deletion when their event is removed. Everything is local.
+Run `node scripts/test-activity-timeline.cjs` for SQLite-backed validation, ordering,
+grouping, CRUD, and cascade checks; database tests verify persistence after reopen.
+
+### Schedule conflicts
+
+Every create/edit save reads the latest event activities from SQLite and checks
+`newStart < existingEnd && newEnd > existingStart`. Adjacent intervals are allowed.
+Comparison uses timestamps including the date; only the same event is checked and
+the edited activity's ID is excluded. Invalid or unscheduled legacy intervals do
+not count as conflicts. Reusable helpers live in `src/utils/activityConflicts.ts`.
+
+Conflicts block saving and display titles, local dates, and time ranges. The user
+can keep editing or explicitly choose "Save anyway — allow overlap". Changing any
+form field clears the warning/override. Confirmation re-reads SQLite; if the list
+or a conflicting activity's title/times changed, it displays the updated warning
+and requires confirmation again. Read failures stop saving. Overrides apply only
+to the current save and never disable future conflict checks. This is a local
+pre-save guard for the timeline editor, not a database uniqueness constraint.
+Run `node scripts/test-activity-conflicts.cjs` for overlap, adjacency, date/event
+isolation, edit exclusion, and stale-confirmation checks against SQLite records.

@@ -79,6 +79,8 @@ function loadModules() {
     await assert.rejects(repo.create({ event_id: 99999, title: 'Orphan', ...extra }));
   }
   const expenseId = await expenses.create({ event_id: id, title: 'Venue deposit', category: 'Venue', estimated_cents: 50000, amount_cents: 25000 });
+  const activityId = await activities.create({ event_id: id, title: 'Welcome', notes: 'Opening remarks', starts_at: '2026-12-01T03:30:00.000Z', ends_at: '2026-12-01T04:30:00.000Z' });
+  assert.equal(await activities.update(activityId, { title: 'Opening', ends_at: '2026-12-01T05:00:00.000Z' }), true);
   assert.equal((await expenses.getById(expenseId)).estimated_cents, 50000);
   assert.equal(await expenses.update(expenseId, { estimated_cents: 60000, amount_cents: 30000, category: 'Hall' }), true);
   await assert.rejects(expenses.update(expenseId, { estimated_cents: -1 }));
@@ -100,6 +102,10 @@ function loadModules() {
   assert.equal((await api.expenses.getById(expenseId)).estimated_cents, 60000);
   assert.equal((await api.expenses.getById(expenseId)).amount_cents, 30000);
   assert.equal((await api.expenses.getById(expenseId)).category, 'Hall');
+  assert.equal((await api.activities.getById(activityId)).title, 'Opening');
+  assert.equal((await api.activities.getById(activityId)).notes, 'Opening remarks');
+  assert.equal((await api.activities.getById(activityId)).starts_at, '2026-12-01T03:30:00.000Z');
+  assert.equal((await api.activities.getById(activityId)).ends_at, '2026-12-01T05:00:00.000Z');
   assert.equal((await api.tasks.getById(taskId)).completed, 1);
   assert.equal((await api.tasks.getById(taskId)).notes, 'Booked');
   assert.equal((await api.tasks.getById(taskId)).priority, 'high');

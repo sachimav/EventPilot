@@ -1,8 +1,9 @@
 import { useLocalSearchParams } from 'expo-router';
 import PlaceholderScreen from '../../../components/PlaceholderScreen';
-import EmptyState from '../../../components/EmptyState';
+import EventTimeline from '../../../components/EventTimeline';
+import { parseEventId } from '../../../utils/eventForm';
 
 export default function EventTimelineScreen() {
   const { id } = useLocalSearchParams();
-  return <PlaceholderScreen title="Let the day flow" description={`Schedule preview for event ${id}.`}><EmptyState icon="time-outline" title="Every moment in its place" description="Your event schedule and milestones will appear here. Timeline planning is coming soon." /></PlaceholderScreen>;
+  return <PlaceholderScreen title="Event timeline" description="Let the day flow. Build a schedule for every moment."><EventTimeline key={String(id)} id={parseEventId(id)} /></PlaceholderScreen>;
 }
