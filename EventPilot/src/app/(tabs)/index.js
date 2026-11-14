@@ -1,7 +1,7 @@
 import PlaceholderScreen, { NavigationButton } from '../../components/PlaceholderScreen';
 import { StyleSheet, View } from 'react-native';
 import StatCard from '../../components/StatCard';
-import EventCard from '../../components/EventCard';
+import EventList from '../../components/EventList';
 import { spacing } from '../../constants/theme';
 
 export default function HomeScreen() {
@@ -12,7 +12,7 @@ export default function HomeScreen() {
         <StatCard label="Tasks to do" value="—" caption="Keep every detail in view" icon="checkbox-outline" />
       </View>
       <NavigationButton href="/events/create">Create an event</NavigationButton>
-      <EventCard title="A celebration to remember" date="Date to be decided" location="Venue to be decided" href="/events/sample-event" />
+      <EventList limit={3} />
       <NavigationButton href="/events">Browse events</NavigationButton>
     </PlaceholderScreen>
   );

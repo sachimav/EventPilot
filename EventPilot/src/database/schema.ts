@@ -50,6 +50,10 @@ export const migrations = [
   CREATE INDEX expenses_event_id ON Expenses(event_id);
   CREATE INDEX activities_event_id ON Activities(event_id);
   `,
+  `
+  ALTER TABLE Events ADD COLUMN category TEXT NOT NULL DEFAULT 'Other' CHECK (length(trim(category)) > 0);
+  ALTER TABLE Events ADD COLUMN time TEXT;
+  `,
 ] as const;
 
 export const SCHEMA_VERSION = migrations.length;
