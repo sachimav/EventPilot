@@ -3,19 +3,20 @@
 `src/database/index.ts` exports the database initializer and typed repositories.
 The root layout waits for initialization before mounting the router. Failures
 show a retry button; failed opens close their connection and can be retried.
-The existing preview screens are unchanged and do not yet call CRUD functions.
+Event list, create, edit, details, and delete screens use the repositories. Lists
+reload whenever their screen regains focus. Task and budget screens remain previews.
 
 The `eventpilot.db` file persists locally across app restarts. No network or
 server is required. WAL mode is enabled, along with foreign keys on every open.
 
-## Schema (version 1)
+## Schema (version 2)
 
 All four tables have an auto-incrementing integer `id` primary key and UTC
 `created_at` / `updated_at` timestamps. Repository updates refresh `updated_at`.
 
 | Table | Fields |
 | --- | --- |
-| Events | Required `name`; optional `date`; `location`, `notes`; nonnegative integer `budget_cents`; three-character `currency` (default `LKR`) |
+| Events | Required `name`; optional `date`, `time`; `category` (default `Other`); `location`, `notes`; nonnegative integer `budget_cents`; three-character `currency` (default `LKR`) |
 | Tasks | Required `event_id`, `title`; `notes`, optional `due_at`; `completed` as SQLite integer 0 or 1 |
 | Expenses | Required `event_id`, `title`, nonnegative integer `amount_cents`; `category`, `notes`, optional `incurred_at` |
 | Activities | Required `event_id`, `title`; optional `starts_at`, `ends_at`; `location`, `notes` |
@@ -30,6 +31,15 @@ dates are `null`; unspecified notes/locations/categories default to empty string
 All monetary amounts use integer minor units (100 cents per LKR), avoiding floating
 point rounding. Expenses inherit the parent event's currency; there is no currency
 conversion. Applications should validate date formats and currency codes before saving.
+
+The event form labels `name` as title and `notes` as description. It requires title,
+category, date, time, location, and a nonnegative budget with at most two decimal
+places. Description is optional. Event date/time are local wall values stored as
+`YYYY-MM-DD` and `HH:mm`; they do not undergo UTC conversion. Native platforms use
+the system date/time picker, and web uses browser date/time inputs. Version 2 adds
+category/time without changing existing rows; older events receive category `Other`
+and an unset time, which the edit form asks the user to fill in before saving.
+Deletion requires explicit confirmation and warns about cascading child records.
 
 ## Migrations
 
@@ -74,3 +84,4 @@ Native persistence should be smoke-tested on a device by creating records,
 restarting the app, reading them back, and deleting an event to verify cascade.
 Run `node scripts/test-database.cjs` with Node 24+ for SQL and repository checks
 using real SQLite through a test adapter (not the Expo native runtime).
+Run `node scripts/test-event-form.cjs` for form validation and value conversion checks.
