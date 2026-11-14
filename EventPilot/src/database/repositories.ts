@@ -5,6 +5,7 @@ interface RecordBase { id: number; created_at: string; updated_at: string }
 export interface Event extends RecordBase {
   name: string; date: string | null; location: string; notes: string;
   budget_cents: number; currency: string;
+  category: string; time: string | null;
 }
 export interface Task extends RecordBase {
   event_id: number; title: string; notes: string; due_at: string | null; completed: 0 | 1;
@@ -92,7 +93,7 @@ function childRepository<T extends RecordBase, Input>(table: string, columns: re
 }
 
 export const events = {
-  ...repository<Event, CreateEvent>('Events', ['name', 'date', 'location', 'notes', 'budget_cents', 'currency']),
+  ...repository<Event, CreateEvent>('Events', ['name', 'date', 'time', 'category', 'location', 'notes', 'budget_cents', 'currency']),
   async list(): Promise<Event[]> {
     const db = await initializeDatabase();
     return db.getAllAsync<Event>('SELECT * FROM Events ORDER BY id DESC');

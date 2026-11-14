@@ -53,11 +53,13 @@ function loadModules() {
   let api = loadModules();
   await Promise.all([api.initializeDatabase(), api.initializeDatabase()]);
   assert.equal(opens, 1);
-  assert.equal(connection.prepare('PRAGMA user_version').get().user_version, 1);
+  assert.equal(connection.prepare('PRAGMA user_version').get().user_version, api.SCHEMA_VERSION);
   const { events, tasks, expenses, activities } = api;
   const name = "Party'); DROP TABLE Events; --";
-  const id = await events.create({ name });
+  const id = await events.create({ name, notes: 'Description', category: 'Conference', date: '2026-12-01', time: '18:30', location: 'Colombo', budget_cents: 12345 });
   assert.equal((await events.getById(id)).name, name);
+  assert.equal((await events.getById(id)).category, 'Conference');
+  assert.equal((await events.getById(id)).time, '18:30');
   assert.equal((await events.list()).length, 1);
   for (const repo of [tasks, expenses, activities]) {
     const extra = repo === expenses ? { amount_cents: 123 } : {};
@@ -82,6 +84,10 @@ function loadModules() {
   connection.close();
   api = loadModules();
   assert.equal((await api.events.getById(id)).notes, 'Saved');
+  assert.equal((await api.events.getById(id)).budget_cents, 12345);
+  await api.events.update(id, { category: 'Birthday', time: '19:45' });
+  assert.equal((await api.events.getById(id)).category, 'Birthday');
+  assert.equal((await api.events.getById(id)).time, '19:45');
   assert.equal(await api.events.delete(id), true);
   for (const repo of [api.tasks, api.expenses, api.activities]) assert.equal((await repo.listByEvent(id)).length, 0);
   assert.equal(await api.events.delete(id), false);
@@ -100,6 +106,18 @@ function loadModules() {
   connection.close();
   api = loadModules();
   await assert.rejects(api.initializeDatabase(), /newer version/);
+  // Simulate an existing v1 installation and verify its records survive upgrade.
+  const old = new DatabaseSync(filename);
+  old.exec('PRAGMA user_version = 1; ALTER TABLE Events DROP COLUMN category; ALTER TABLE Events DROP COLUMN time;');
+  old.prepare('INSERT INTO Events (name, notes, budget_cents) VALUES (?, ?, ?)').run('Legacy event', 'Keep me', 999);
+  old.close();
+  api = loadModules();
+  const legacy = (await api.events.list())[0];
+  assert.equal(legacy.name, 'Legacy event');
+  assert.equal(legacy.notes, 'Keep me');
+  assert.equal(legacy.budget_cents, 999);
+  assert.equal(legacy.category, 'Other');
+  assert.equal(legacy.time, null);
   console.log('Database checks passed: CRUD, constraints, cascade, reopen, migration rollback, retry, version guard.');
 })().finally(() => {
   try { connection?.close(); } catch {}
