@@ -1,0 +1,78 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const ts = require('typescript');
+const { DatabaseSync } = require('node:sqlite');
+function load(file) {
+  const { outputText } = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+  });
+  const context = { exports: {}, require: (id) => load(path.resolve(path.dirname(file), `${id}.ts`)) };
+  vm.runInNewContext(outputText, context);
+  return context.exports;
+}
+const { migrations } = load(path.join(__dirname, '../src/database/schema.ts'));
+const { dashboardRecordAnalytics, dashboardTaskAnalytics } = load(path.join(__dirname, '../src/utils/dashboardAnalytics.ts'));
+const db = new DatabaseSync(':memory:');
+try {
+  db.exec('PRAGMA foreign_keys = ON');
+  for (const sql of migrations) db.exec(sql);
+  const now = Date.parse('2026-11-14T10:00:00+05:30');
+  const read = () => ({ events: db.prepare('SELECT * FROM Events').all(), tasks: db.prepare('SELECT * FROM Tasks').all(), expenses: db.prepare('SELECT * FROM Expenses').all() });
+  const staticData = () => dashboardRecordAnalytics(read());
+  assert.equal(staticData().completion.percentage, null);
+  assert.equal(staticData().warnings.length, 0);
+  assert.equal(dashboardTaskAnalytics([], now).pending, 0);
+  db.exec("INSERT INTO Events (name, budget_cents) VALUES ('Over budget', 10000), ('Zero budget', 0), ('High estimate', 10000), ('Near limit', 10000), ('Safe', 10000)");
+  const addExpense = db.prepare('INSERT INTO Expenses (event_id, title, estimated_cents, amount_cents) VALUES (?, ?, ?, ?)');
+  addExpense.run(1, 'Over', 10000, 12000);
+  addExpense.run(2, 'Unbudgeted', 0, 100);
+  addExpense.run(3, 'Estimated over', 11000, 1000);
+  addExpense.run(4, 'Near', 8000, 9000);
+  addExpense.run(5, 'Below threshold', 8000, 8999);
+  let result = staticData();
+  assert.equal(result.warnings.map((warning) => warning.event.id).join(','), '1,2,3,4');
+  assert.equal(result.warnings[0].kind, 'overspent');
+  assert.equal(result.warnings[0].summary.overspentAmount, 2000n);
+  assert.equal(result.warnings[0].summary.progressPercent, 100);
+  assert.equal(result.warnings[1].summary.utilizationPercent, null);
+  assert.equal(result.warnings[2].kind, 'estimated');
+  assert.equal(result.warnings[3].kind, 'near-limit');
+  assert.equal(result.warnings[3].summary.utilizationPercent, 90);
+  const addTask = db.prepare('INSERT INTO Tasks (event_id, title, due_at, completed) VALUES (?, ?, ?, ?)');
+  const iso = (delta) => new Date(now + delta).toISOString();
+  const urgent = Number(addTask.run(1, 'Urgent', iso(48 * 3600000), 0).lastInsertRowid);
+  addTask.run(1, 'Done', iso(-1), 1);
+  addTask.run(2, 'Overdue', iso(-1), 0);
+  addTask.run(3, 'Upcoming', iso(48 * 3600000 + 1), 0);
+  addTask.run(4, 'No deadline', null, 0);
+  result = staticData();
+  assert.equal(result.completion.completedTasks, 1);
+  assert.equal(result.completion.totalTasks, 5);
+  assert.equal(result.completion.percentage, 20);
+  assert.equal(result.readiness.get(1).percentage, 50);
+  assert.equal(result.readiness.has(5), false);
+  let work = dashboardTaskAnalytics(result.tasks, now);
+  assert.equal(work.pending, 4);
+  assert.equal(work.counts.urgent, 1);
+  assert.equal(work.counts.overdue, 1);
+  assert.equal(work.attention.map((task) => task.title).join('|'), 'Overdue|Urgent');
+  assert.equal(dashboardTaskAnalytics(result.tasks, now + 1).counts.urgent, 2);
+  db.prepare('UPDATE Tasks SET completed = 1 WHERE id = ?').run(urgent);
+  result = staticData();
+  assert.equal(result.readiness.get(1).percentage, 100);
+  assert.equal(dashboardTaskAnalytics(result.tasks, now).pending, 3);
+  db.exec('UPDATE Events SET budget_cents = 20000 WHERE id = 1');
+  assert.equal(staticData().warnings.some((warning) => warning.event.id === 1), false);
+  db.exec('DELETE FROM Expenses WHERE event_id = 2');
+  assert.equal(staticData().warnings.some((warning) => warning.event.id === 2), false);
+  db.exec('UPDATE Expenses SET amount_cents = 10000 WHERE event_id = 5');
+  assert.equal(staticData().warnings.find((warning) => warning.event.id === 5).summary.utilizationPercent, 100);
+  db.exec('DELETE FROM Events');
+  result = staticData();
+  assert.equal(result.warnings.length, 0);
+  assert.equal(result.completion.percentage, null);
+  assert.equal(dashboardTaskAnalytics(result.tasks, now).pending, 0);
+  console.log('Dashboard analytics checks passed: SQLite task counts/readiness, deadline boundaries, budget warnings/90% threshold, zero budgets, mutations, and empty datasets.');
+} finally { db.close(); }

@@ -1,5 +1,7 @@
 import type { SQLiteBindValue } from 'expo-sqlite';
 import { initializeDatabase } from './database';
+import { notifyTaskChanges } from './taskChanges';
+import { notifyDataChanges } from './dataChanges';
 
 interface RecordBase { id: number; created_at: string; updated_at: string }
 export interface Event extends RecordBase {
@@ -56,6 +58,8 @@ function repository<T extends RecordBase, Input>(table: string, columns: readonl
       const result = await db.runAsync(
         `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`, values,
       );
+      if (table === 'Tasks') notifyTaskChanges();
+      if (table === 'Events' || table === 'Tasks' || table === 'Expenses') notifyDataChanges();
       return result.lastInsertRowId;
     },
     async getById(id: number): Promise<T | null> {
@@ -72,12 +76,16 @@ function repository<T extends RecordBase, Input>(table: string, columns: readonl
         `UPDATE ${table} SET ${keys.map((key) => `${key} = ?`).join(', ')}, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?`,
         [...values, id],
       );
+      if (table === 'Tasks' && result.changes > 0) notifyTaskChanges();
+      if (result.changes > 0 && (table === 'Events' || table === 'Tasks' || table === 'Expenses')) notifyDataChanges();
       return result.changes > 0;
     },
     async delete(id: number): Promise<boolean> {
       assertId(id);
       const db = await initializeDatabase();
       const result = await db.runAsync(`DELETE FROM ${table} WHERE id = ?`, [id]);
+      if ((table === 'Tasks' || table === 'Events') && result.changes > 0) notifyTaskChanges();
+      if (result.changes > 0 && (table === 'Events' || table === 'Tasks' || table === 'Expenses')) notifyDataChanges();
       return result.changes > 0;
     },
   };

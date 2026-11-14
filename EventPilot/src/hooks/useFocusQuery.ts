@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 
 /** Reload on every navigation focus; ignore results from a blurred screen. */
-export function useFocusQuery<T>(query: () => Promise<T>) {
+export function useFocusQuery<T>(query: () => Promise<T>, subscribe?: (listener: () => void) => () => void) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -19,8 +19,9 @@ export function useFocusQuery<T>(query: () => Promise<T>) {
     });
   }, [query]);
   useFocusEffect(useCallback(() => {
+    const unsubscribe = subscribe?.(load);
     load();
-    return () => { generation.current += 1; };
-  }, [load]));
+    return () => { unsubscribe?.(); generation.current += 1; };
+  }, [load, subscribe]));
   return { data, loading, error, retry: load };
 }

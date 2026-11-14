@@ -1,17 +1,23 @@
 import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { events } from '../database';
+import { events, tasks, subscribeTaskChanges } from '../database';
 import { useFocusQuery } from '../hooks/useFocusQuery';
 import { eventDate } from '../utils/eventForm';
 import { cardStyle, colors, spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
 import EventCard from './EventCard';
 import EmptyState from './EmptyState';
+import EventReadiness from './EventReadiness';
+import { readinessForEvent } from '../utils/eventReadiness';
 
 export default function EventDetails({ id }: { id: number | null }) {
-  const query = useCallback(() => id === null ? Promise.resolve(null) : events.getById(id), [id]);
-  const { data: event, loading, error, retry } = useFocusQuery(query);
+  const query = useCallback(async () => {
+    if (id === null) return null;
+    const [event, rows] = await Promise.all([events.getById(id), tasks.listByEvent(id)]);
+    return event ? { event, readiness: readinessForEvent(id, rows) } : null;
+  }, [id]);
+  const { data, loading, error, retry } = useFocusQuery(query, subscribeTaskChanges);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -32,10 +38,12 @@ export default function EventDetails({ id }: { id: number | null }) {
   if (loading) return <ActivityIndicator color={colors.primary} accessibilityLabel="Loading event" />;
   if (error) return <EmptyState title="Unable to load event" description="Please try again."
     action={<AppButton title="Retry" onPress={retry} />} />;
-  if (!event) return <EmptyState title="Event not found" description="This event may have been deleted."
+  if (!data) return <EmptyState title="Event not found" description="This event may have been deleted."
     action={<AppButton title="Browse events" href="/events" />} />;
+  const { event, readiness } = data;
   return <>
     <EventCard title={event.name} date={eventDate(event)} location={event.location || 'Venue to be decided'} status={event.category} />
+    <View style={cardStyle}><EventReadiness readiness={readiness} /></View>
     <View style={{ ...cardStyle, gap: spacing.md }}>
       <Text style={{ ...typography.heading, color: colors.heading }}>Description</Text>
       <Text style={{ ...typography.body, color: colors.text }}>{event.notes || 'No description added.'}</Text>

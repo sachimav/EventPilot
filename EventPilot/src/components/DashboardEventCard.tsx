@@ -3,13 +3,15 @@ import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Event } from '../database';
 import { cardStyle, colors, radii, spacing, typography } from '../constants/theme';
+import EventReadiness from './EventReadiness';
+import type { EventReadiness as Readiness } from '../utils/eventReadiness';
 
-export default function DashboardEventCard({ event }: { event: Event }) {
+export default function DashboardEventCard({ event, readiness }: { event: Event; readiness: Readiness }) {
   const date = new Date(`${event.date}T12:00:00`);
   const month = date.toLocaleDateString(undefined, { month: 'short' });
   const fullDate = date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
   return <Link href={{ pathname: '/events/[id]', params: { id: event.id } }} asChild>
-    <Pressable accessibilityRole="button" accessibilityLabel={`View ${event.name}, ${fullDate}${event.time ? ` at ${event.time}` : ''}`}
+    <Pressable accessibilityRole="button" accessibilityLabel={`View ${event.name}, ${fullDate}${event.time ? ` at ${event.time}` : ''}. Event Readiness: ${readiness.percentage === null ? 'Not Assessed' : `${readiness.completedTasks} of ${readiness.totalTasks} tasks completed`}`}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
       <View style={styles.main}>
         <View style={styles.dateTile}>
@@ -27,6 +29,7 @@ export default function DashboardEventCard({ event }: { event: Event }) {
         <View style={styles.meta}><Ionicons name="time-outline" size={16} color={colors.primary} /><Text style={styles.time}>{event.time || 'Time not set'}</Text></View>
         <View style={[styles.meta, styles.venue]}><Ionicons name="location-outline" size={16} color={colors.text} /><Text numberOfLines={2} style={styles.location}>{event.location || 'Location not set'}</Text></View>
       </View>
+      <EventReadiness readiness={readiness} />
     </Pressable>
   </Link>;
 }

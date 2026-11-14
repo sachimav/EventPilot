@@ -234,3 +234,44 @@ to the current save and never disable future conflict checks. This is a local
 pre-save guard for the timeline editor, not a database uniqueness constraint.
 Run `node scripts/test-activity-conflicts.cjs` for overlap, adjacency, date/event
 isolation, edit exclusion, and stale-confirmation checks against SQLite records.
+
+## Event Readiness
+
+`src/utils/eventReadiness.ts` calculates `completedTasks / totalTasks * 100`
+using actual event task records (`completed = 1`), with helpers for one event or
+all events in a single pass. Zero tasks returns a null percentage, shown as
+**Not Assessed** with an empty progress track. Pending-only events are 0%; only
+fully completed task lists show 100%. The formula retains full precision; labels
+truncate to one decimal place, while the bar uses the unrounded value.
+
+Event Details displays a readiness card; Home displays readiness on every upcoming
+event card. Both read task rows from SQLite and subscribe to successful task
+create/update/delete notifications. Reassigning tasks refreshes both events, and
+event deletion notifies after cascading task removal. Failed/no-op writes do not
+notify. Focused views refresh immediately from SQLite; blurred views unsubscribe
+and refresh on return. Query generations prevent stale reads overwriting newer
+results. Failed task reads show a retry error rather than a fabricated score.
+No derived score is stored and no polling or schema migration is required.
+Run `node scripts/test-event-readiness.cjs` for score and SQLite mutation checks;
+database tests also verify successful-write-only change notifications.
+
+## Dashboard analytics
+
+Home loads Events, Tasks, and Expenses from SQLite. It shows incomplete task count,
+Urgent tasks (due now through exactly 48 hours), Overdue tasks, cross-event task
+completion, and the three most pressing tasks. Upcoming event cards include their
+individual readiness; no-task events remain Not Assessed. Budget watch flags actual
+overspending, estimates over budget, and actual utilization of at least 90%, using
+exact integer comparisons. Actual overspending takes precedence, including spending
+against zero budgets. Warnings show up to three events, counts, rupee amounts,
+utilization bars, and links to the existing event/budget screens.
+
+`dashboardAnalytics.ts` reuses task deadline, readiness, and budget utilities.
+Monetary analytics are memoized per SQLite refresh; only time-sensitive counts
+recompute from the focused screen clock. Successful Event/Task/Expense repository
+writes invalidate Home immediately. Navigation focus also reloads SQLite; clock
+ticks and app resume update deadline classifications without querying every second.
+No chart library, background service, or new schema is needed. Empty datasets show
+zero counts, Not Assessed progress, and actionable empty states. Read failures show
+retry rather than substitute statistics.
+Run `node scripts/test-dashboard-analytics.cjs` for SQLite-backed aggregate checks.
