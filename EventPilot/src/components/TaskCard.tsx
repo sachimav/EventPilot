@@ -42,13 +42,13 @@ export default function TaskCard({ task, eventName, disabled, onEdit, onChange, 
     {details && <>
       <Text style={{ ...typography.body, color: colors.text }}>{task.notes || 'No description added.'}</Text>
       <AppButton title="View event" variant="secondary" href={{ pathname: '/events/[id]', params: { id: task.event_id } }} disabled={locked} />
-      <AppButton title="Edit task" variant="secondary" onPress={onEdit} disabled={locked} />
-      {!confirm ? <AppButton title="Delete task" variant="secondary" onPress={() => setConfirm(true)} disabled={locked} /> : <>
+    </>}
+    <AppButton title="Edit task" icon="create-outline" variant="secondary" onPress={onEdit} disabled={locked} />
+      {!confirm ? <AppButton title="Delete task" icon="trash-outline" variant="danger" onPress={() => setConfirm(true)} disabled={locked} /> : <>
         <Text accessibilityRole="alert" style={{ color: colors.danger }}>Delete “{task.title}” permanently?</Text>
         <AppButton title={busy ? 'Deleting…' : 'Confirm deletion'} onPress={() => mutate(true)} disabled={locked} />
         <AppButton title="Cancel deletion" variant="secondary" onPress={() => setConfirm(false)} disabled={locked} />
       </>}
-    </>}
     {!confirm && <AppButton title={busy ? 'Updating…' : task.completed ? 'Mark incomplete' : 'Mark complete'} onPress={() => mutate(false)} disabled={locked} />}
     {!!error && <Text accessibilityRole="alert" style={{ color: colors.danger }}>{error}</Text>}
   </View>;

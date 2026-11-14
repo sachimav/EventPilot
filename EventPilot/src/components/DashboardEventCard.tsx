@@ -10,9 +10,8 @@ export default function DashboardEventCard({ event, readiness }: { event: Event;
   const date = new Date(`${event.date}T12:00:00`);
   const month = date.toLocaleDateString(undefined, { month: 'short' });
   const fullDate = date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-  return <Link href={{ pathname: '/events/[id]', params: { id: event.id } }} asChild>
-    <Pressable accessibilityRole="button" accessibilityLabel={`View ${event.name}, ${fullDate}${event.time ? ` at ${event.time}` : ''}. Event Readiness: ${readiness.percentage === null ? 'Not Assessed' : `${readiness.completedTasks} of ${readiness.totalTasks} tasks completed`}`}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
+  return <Link href={{ pathname: '/events/[id]', params: { id: event.id } }} style={styles.card} asChild>
+    <Pressable accessibilityRole="button" accessibilityLabel={`View ${event.name}, ${fullDate}${event.time ? ` at ${event.time}` : ''}. Event Readiness: ${readiness.percentage === null ? 'Not Assessed' : `${readiness.completedTasks} of ${readiness.totalTasks} tasks completed`}`}>
       <View style={styles.main}>
         <View style={styles.dateTile}>
           <Text style={styles.month}>{month.toUpperCase()}</Text>

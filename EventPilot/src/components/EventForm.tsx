@@ -6,6 +6,7 @@ import EventDateTimeField from './EventDateTimeField';
 import { cardStyle, colors, spacing } from '../constants/theme';
 import { emptyEvent, toEventInput, validateEvent, type EventErrors, type EventValues } from '../utils/eventForm';
 import type { CreateEvent } from '../database';
+import { router } from 'expo-router';
 
 interface Props {
   initialValues?: EventValues; currency?: string;
@@ -46,6 +47,7 @@ export default function EventForm({ initialValues = emptyEvent, currency = 'LKR'
     <AppInput label="Location *" value={values.location} onChangeText={(value) => change('location', value)} error={errors.location} editable={!saving} />
     <AppInput label={`Total budget (${currency}) *`} keyboardType="decimal-pad" placeholder="0.00" value={values.budget} onChangeText={(value) => change('budget', value)} error={errors.budget} editable={!saving} />
     {!!error && <Text accessibilityRole="alert" style={{ color: colors.danger }}>{error}</Text>}
-    <AppButton title={saving ? 'Saving…' : 'Save event'} onPress={save} disabled={saving} />
+    <AppButton title={saving ? 'Saving…' : 'Save event'} icon="checkmark-circle-outline" onPress={save} disabled={saving} />
+    <AppButton title="Cancel" icon="close-outline" variant="secondary" onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/events'); }} disabled={saving} />
   </View>;
 }

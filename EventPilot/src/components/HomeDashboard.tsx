@@ -14,6 +14,7 @@ import DashboardEventCard from './DashboardEventCard';
 import { calculateReadiness, readinessByEvent } from '../utils/eventReadiness';
 import { useTaskClock } from '../hooks/useTaskClock';
 import DashboardInsights from './DashboardInsights';
+import QuickActions from './QuickActions';
 
 async function loadDashboard() {
   const [eventRows, taskRows, expenseRows] = await Promise.all([events.list(), tasks.list(), expenses.list()]);
@@ -40,13 +41,19 @@ export default function HomeDashboard() {
           </View>
           <View style={styles.heroIcon}><Ionicons name="calendar-outline" color={colors.surface} size={32} /></View>
         </View>
-        <Link href="/events/create" asChild>
-          <Pressable accessibilityRole="button" style={({ pressed }) => [styles.create, pressed && styles.pressed]}>
+        <Link href="/events/create" style={styles.create} asChild>
+          <Pressable accessibilityRole="button">
             <Ionicons name="add-circle-outline" size={22} color={colors.primary} />
             <Text style={styles.createLabel}>Create Event</Text>
           </Pressable>
         </Link>
       </View>
+      <QuickActions actions={[
+        { title: 'Create event', description: 'Start a new plan', icon: 'add-circle-outline', href: '/events/create' },
+        { title: 'My events', description: 'Open your event workspace', icon: 'calendar-outline', href: '/events' },
+        { title: 'Manage tasks', description: 'Add, edit and complete to-dos', icon: 'checkbox-outline', href: '/tasks' },
+        { title: 'Track expenses', description: 'Plan and review your budget', icon: 'wallet-outline', href: '/budget' },
+      ]} />
       {loading ? <View style={styles.loading}><ActivityIndicator color={colors.primary} accessibilityLabel="Loading dashboard" /><Text style={styles.subtitle}>Loading your event overview…</Text></View>
         : error || !data ? <EmptyState title="Unable to load your dashboard" description="Your local events could not be read. Please try again." action={<AppButton title="Retry" onPress={retry} />} />
           : <>

@@ -45,6 +45,8 @@ export default function RootLayout() {
         <Stack.Screen name="events/[id]/index" options={{ title: 'Event Details' }} />
         <Stack.Screen name="events/[id]/edit" options={{ title: 'Edit Event' }} />
         <Stack.Screen name="events/[id]/timeline" options={{ title: 'Event Timeline' }} />
+        <Stack.Screen name="events/[id]/tasks" options={{ title: 'Event Tasks' }} />
+        <Stack.Screen name="events/[id]/budget" options={{ title: 'Event Budget' }} />
       </Stack>
     </>
   );

@@ -12,7 +12,7 @@ export default function EventCard({ title, date, location, status = 'Sample even
     <View style={styles.location}><Ionicons name="location-outline" size={16} color={colors.text} /><Text style={styles.meta}>{location}</Text></View>
     {href ? <Text style={styles.link}>View event →</Text> : null}
   </>;
-  return href ? <Link href={href} asChild><Pressable accessibilityRole="button" accessibilityLabel={`View ${title}`} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>{content}</Pressable></Link> : <View style={styles.card}>{content}</View>;
+  return href ? <Link href={href} style={styles.card} asChild><Pressable accessibilityRole="button" accessibilityLabel={`View ${title}`}>{content}</Pressable></Link> : <View style={styles.card}>{content}</View>;
 }
 const styles = StyleSheet.create({
   card: { ...cardStyle, gap: spacing.md },

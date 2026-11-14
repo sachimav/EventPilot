@@ -18,9 +18,9 @@ async function loadTasks() {
   return { events: eventRows, tasks: taskRows };
 }
 
-export default function TaskManager() {
+export default function TaskManager({ initialEventId }: { initialEventId?: number } = {}) {
   const { data, loading, error, retry } = useFocusQuery(loadTasks);
-  const [filters, setFilters] = useState<TaskFilters>(defaultTaskFilters);
+  const [filters, setFilters] = useState<TaskFilters>({ ...defaultTaskFilters, event: initialEventId ? String(initialEventId) : 'all' });
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const now = useTaskClock();
@@ -28,16 +28,22 @@ export default function TaskManager() {
   // Counts honor event/priority selection but ignore status, so all buckets stay visible.
   const counts = useMemo(() => countTaskStatuses(filterTasks(data?.tasks ?? [], { ...filters, status: 'all' }, now), now), [data, filters, now]);
   // Keep unsaved edits mounted if a live status transition hides the task.
-  const displayed = editing && !visible.some((task) => task.id === editing.id) ? [editing, ...visible] : visible;
+  const editingExists = editing !== null && !!data?.tasks.some((task) => task.id === editing.id);
+  const displayed = editing && editingExists && !visible.some((task) => task.id === editing.id) ? [editing, ...visible] : visible;
   const eventNames = new Map(data?.events.map((event) => [event.id, event.name]));
-  const editingForm = creating || editing !== null;
+  const editingForm = creating || editingExists;
   const active = filters.event !== 'all' || filters.priority !== 'all' || filters.status !== 'all';
   const eventChoices = [{ value: 'all', label: 'All events' }, ...(data?.events ?? []).map((event) => ({ value: String(event.id), label: event.name }))];
   if (!eventChoices.some((choice) => choice.value === filters.event)) eventChoices.push({ value: filters.event, label: 'Deleted event' });
   function clear() { setFilters({ ...defaultTaskFilters }); }
   return <View style={{ gap: spacing.lg }}>
-    <AppButton title="Create task" onPress={() => setCreating(true)} disabled={editingForm || loading || error || !data?.events.length} />
-    {creating && data && <TaskForm events={data.events} initialValues={{ ...emptyTask, eventId: filters.event === 'all' ? '' : filters.event }}
+    <AppButton title="Create task" icon="add-circle-outline" onPress={() => { setEditing(null); setCreating(true); }} disabled={editingForm || loading || error || !data?.events.length} />
+    {editing && !editingExists && !loading && <View style={{ gap: spacing.sm }}>
+      <Text accessibilityRole="alert" style={{ color: colors.text }}>The task you were editing is no longer available. You can create another task.</Text>
+      <AppButton title="Dismiss" variant="secondary" onPress={() => setEditing(null)} />
+    </View>}
+    {editingExists && <AppButton title="Cancel editing" variant="secondary" icon="close-outline" onPress={() => setEditing(null)} />}
+    {creating && data && <TaskForm events={data.events} initialValues={{ ...emptyTask, eventId: filters.event === 'all' ? (data.events.length === 1 ? String(data.events[0].id) : '') : filters.event }}
       onCancel={() => setCreating(false)} onSave={async (input) => {
         await tasks.create(input);
         setCreating(false);

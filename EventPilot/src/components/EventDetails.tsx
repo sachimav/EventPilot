@@ -10,6 +10,7 @@ import EventCard from './EventCard';
 import EmptyState from './EmptyState';
 import EventReadiness from './EventReadiness';
 import { readinessForEvent } from '../utils/eventReadiness';
+import QuickActions from './QuickActions';
 
 export default function EventDetails({ id }: { id: number | null }) {
   const query = useCallback(async () => {
@@ -44,6 +45,11 @@ export default function EventDetails({ id }: { id: number | null }) {
   return <>
     <EventCard title={event.name} date={eventDate(event)} location={event.location || 'Venue to be decided'} status={event.category} />
     <View style={cardStyle}><EventReadiness readiness={readiness} /></View>
+    <QuickActions title="Manage this event" actions={[
+      { title: 'Event tasks', description: 'Add and complete your checklist', icon: 'checkbox-outline', href: { pathname: '/events/[id]/tasks', params: { id: event.id } } },
+      { title: 'Event budget', description: 'Add expenses and track spending', icon: 'wallet-outline', href: { pathname: '/events/[id]/budget', params: { id: event.id } } },
+      { title: 'Event timeline', description: 'Schedule activities for the day', icon: 'time-outline', href: { pathname: '/events/[id]/timeline', params: { id: event.id } } },
+    ]} />
     <View style={{ ...cardStyle, gap: spacing.md }}>
       <Text style={{ ...typography.heading, color: colors.heading }}>Description</Text>
       <Text style={{ ...typography.body, color: colors.text }}>{event.notes || 'No description added.'}</Text>
@@ -51,9 +57,9 @@ export default function EventDetails({ id }: { id: number | null }) {
       <Text style={{ ...typography.body, color: colors.text }}>{event.currency} {(event.budget_cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
     </View>
     {!confirming ? <>
-      <AppButton title="Edit event" href={{ pathname: '/events/[id]/edit', params: { id: event.id } }} />
+      <AppButton title="Edit event" icon="create-outline" href={{ pathname: '/events/[id]/edit', params: { id: event.id } }} />
       <AppButton title="View timeline" href={{ pathname: '/events/[id]/timeline', params: { id: event.id } }} variant="secondary" />
-      <AppButton title="Delete event" variant="secondary" onPress={() => setConfirming(true)} />
+      <AppButton title="Delete event" icon="trash-outline" variant="danger" onPress={() => setConfirming(true)} />
     </> : <View style={{ ...cardStyle, gap: spacing.lg }}>
       <Text accessibilityRole="header" style={{ ...typography.heading, color: colors.danger }}>Delete this event?</Text>
       <Text style={{ ...typography.body, color: colors.text }}>“{event.name}” and all its tasks, expenses, and activities will be permanently deleted.</Text>

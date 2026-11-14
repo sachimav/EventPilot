@@ -16,7 +16,8 @@ export default function TabLayout() {
       headerTintColor: colors.heading,
       headerStyle: { backgroundColor: colors.background },
       headerShadowVisible: false,
-      tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+      tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, paddingTop: 8 },
+      tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
       tabBarItemStyle: { minHeight: 48 },
       tabBarActiveTintColor: colors.primary,
       tabBarInactiveTintColor: colors.text,
@@ -25,8 +26,8 @@ export default function TabLayout() {
         <Ionicons name={icons[route.name][focused ? 1 : 0]} size={size} color={focused ? colors.primary : colors.text} />
       ),
     })}>
-      <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="events" options={{ title: 'Events' }} />
+      <Tabs.Screen name="index" options={{ title: 'Home', headerTitle: 'EventPilot' }} />
+      <Tabs.Screen name="events" options={{ title: 'My Events' }} />
       <Tabs.Screen name="tasks" options={{ title: 'Tasks' }} />
       <Tabs.Screen name="budget" options={{ title: 'Budget' }} />
     </Tabs>

@@ -16,17 +16,18 @@ async function loadBudget() {
   return { events: eventRows, expenses: expenseRows };
 }
 
-export default function BudgetManager() {
+export default function BudgetManager({ initialEventId }: { initialEventId?: number } = {}) {
   const { data, loading, error, retry } = useFocusQuery(loadBudget);
-  const [eventId, setEventId] = useState('');
+  const [eventId, setEventId] = useState(initialEventId ? String(initialEventId) : '');
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
-  const selected = data?.events.find((event) => String(event.id) === eventId);
-  const rows = useMemo(() => (data?.expenses ?? []).filter((expense) => String(expense.event_id) === eventId), [data, eventId]);
+  const selected = data?.events.find((event) => String(event.id) === eventId) ?? (!eventId ? data?.events[0] : undefined);
+  const selectedId = selected?.id;
+  const rows = useMemo(() => (data?.expenses ?? []).filter((expense) => expense.event_id === selectedId), [data, selectedId]);
   const summary = useMemo(() => selected ? summarizeBudget(selected, rows) : null, [selected, rows]);
   const editingForm = !!selected && (creating || editing !== null);
   return <View style={{ gap: spacing.lg }}>
-    <ChoiceChips label="Select an event" value={eventId} disabled={editingForm}
+    <ChoiceChips label="Select an event" value={selected ? String(selected.id) : eventId} disabled={editingForm}
       choices={(data?.events ?? []).map((event) => ({ value: String(event.id), label: event.name }))}
       onChange={(value) => { setEventId(value); setCreating(false); setEditing(null); }} />
     {error && data && <View style={{ gap: spacing.sm }}>
@@ -41,7 +42,7 @@ export default function BudgetManager() {
             : <>
               <Text accessibilityRole="header" style={{ ...typography.heading, color: colors.heading }}>{selected.name}</Text>
               <Text style={{ ...typography.caption, color: colors.text }}>All amounts in Sri Lankan rupees (LKR).</Text>
-              <AppButton title="Add expense" onPress={() => setCreating(true)} disabled={editingForm || loading || error} />
+              <AppButton title="Add expense" icon="add-circle-outline" onPress={() => { setEventId(String(selected.id)); setCreating(true); }} disabled={editingForm || loading || error} />
               {creating && <ExpenseForm key={`create-${selected.id}`} eventId={selected.id} eventName={selected.name}
                 onCancel={() => setCreating(false)} onSave={async (input) => {
                   await expenses.create(input);
