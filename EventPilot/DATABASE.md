@@ -306,7 +306,12 @@ confirmation. Explicit completed/cancelled status and scheduled end times govern
 upcoming/past filtering. Legacy events without end times retain start-based behavior.
 
 Calendar combines active events, incomplete task deadlines and activities in a month
-agenda. `.ics` export includes calendar alarms 24 hours before event/activity starts;
+agenda. Multi-day events appear on every occupied day, clipped to the displayed
+month; an end exactly at midnight excludes that following day. Month navigation
+supports years 0001 through 9999 and rejects navigation beyond those bounds.
+Event editor saves use a conditional SQLite update that rejects records in Trash,
+including saves from forms opened before deletion. Restore remains available through
+Data & recovery. `.ics` export includes calendar alarms 24 hours before event/activity starts;
 events without ends use a one-hour export duration. Calendar apps control delivery.
 Reports are escaped printable HTML; CSV exports neutralize spreadsheet formulas.
 Reminders persist locally and appear in Reminder Center and on Home when due, only

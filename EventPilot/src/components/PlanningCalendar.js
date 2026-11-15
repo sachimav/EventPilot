@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { activities, events, tasks, subscribeDataChanges } from '../database';
 import { useFocusQuery } from '../hooks/useFocusQuery';
 import { dateString } from '../utils/eventForm';
+import { validCalendarMonth, shiftCalendarMonth } from '../utils/calendar';
 import { calendarAgenda, calendarExport } from '../utils/eventExports';
 import { saveTextFile } from '../utils/files';
 import { cardStyle, colors, spacing } from '../constants/theme';
@@ -19,17 +20,18 @@ export default function PlanningCalendar() {
     const [month, setMonth] = useState(dateString(new Date()).slice(0, 7));
     const [message, setMessage] = useState('');
     const [selectedDay, setSelectedDay] = useState(null);
-    const agenda = useMemo(() => data ? calendarAgenda(data.events, data.tasks, data.activities).filter((row) => row.date.startsWith(month)) : [], [data, month]);
-    const validMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(month);
+    const agenda = useMemo(() => data ? calendarAgenda(data.events, data.tasks, data.activities, month) : [], [data, month]);
+    const validMonth = validCalendarMonth(month);
     const first = validMonth ? new Date(`${month}-01T12:00:00`) : null;
-    const dayCount = first ? new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate() : 0;
+    const last = first && new Date(first);
+    if (last) { last.setMonth(last.getMonth() + 1); last.setDate(0); }
+    const dayCount = last ? last.getDate() : 0;
     const visibleAgenda = selectedDay?.startsWith(month) ? agenda.filter((row) => row.date === selectedDay) : agenda;
     return <View style={{ gap: spacing.lg }}>
-    <AppInput label="Month (YYYY-MM)" value={month} onChangeText={setMonth} error={validMonth ? undefined : 'Enter a month such as 2026-12.'}/>
-    <View style={{ flexDirection: 'row', gap: spacing.sm }}>{[-1, 1].map((step) => <View key={step} style={{ flex: 1 }}><AppButton title={step < 0 ? 'Previous month' : 'Next month'} variant="secondary" disabled={!validMonth} onPress={() => {
-                const date = new Date(`${month}-15T12:00:00`);
-                date.setMonth(date.getMonth() + step);
-                setMonth(dateString(date).slice(0, 7));
+    <AppInput label="Month (YYYY-MM)" value={month} onChangeText={(value) => { setMonth(value); setSelectedDay(null); }} error={validMonth ? undefined : 'Enter a valid month (YYYY-MM), with a year from 0001 to 9999.'}/>
+    <View style={{ flexDirection: 'row', gap: spacing.sm }}>{[-1, 1].map((step) => <View key={step} style={{ flex: 1 }}><AppButton title={step < 0 ? 'Previous month' : 'Next month'} variant="secondary" disabled={shiftCalendarMonth(month, step) === null} onPress={() => {
+                const next = shiftCalendarMonth(month, step);
+                if (next) { setMonth(next); setSelectedDay(null); }
             }}/></View>)}</View>
     {first && <View style={{ ...cardStyle, gap: spacing.sm }}>
       <Text accessibilityRole="header" style={{ color: colors.heading, fontWeight: '700' }}>{first.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</Text>
