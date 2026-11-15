@@ -7,7 +7,7 @@ function assertId(id) {
 }
 // Table names and identifiers originate only from the fixed definitions below.
 // Reject unexpected properties even when called from untyped JavaScript.
-function repository(table, columns) {
+function repository(table, columns, updateCondition = '') {
     function bindings(input) {
         const entries = Object.entries(input);
         for (const [key, value] of entries) {
@@ -48,7 +48,7 @@ function repository(table, columns) {
             if (!keys.length)
                 throw new TypeError('Update requires at least one field.');
             const db = await initializeDatabase();
-            const result = await db.runAsync(`UPDATE ${table} SET ${keys.map((key) => `${key} = ?`).join(', ')}, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?`, [...values, id]);
+            const result = await db.runAsync(`UPDATE ${table} SET ${keys.map((key) => `${key} = ?`).join(', ')}, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?${updateCondition}`, [...values, id]);
             if (table === 'Tasks' && result.changes > 0)
                 notifyTaskChanges();
             if (result.changes > 0 && table !== 'Activities')
@@ -77,8 +77,11 @@ function childRepository(table, columns) {
         },
     };
 }
+const eventDetailsColumns = ['name', 'date', 'time', 'category', 'location', 'notes', 'budget_cents', 'currency', 'status', 'end_date', 'end_time'];
 export const events = {
-    ...repository('Events', ['name', 'date', 'time', 'category', 'location', 'notes', 'budget_cents', 'currency', 'status', 'end_date', 'end_time', 'archived_at', 'deleted_at']),
+    ...repository('Events', [...eventDetailsColumns, 'archived_at', 'deleted_at']),
+    // Check Trash state in the UPDATE itself, including saves from stale editors.
+    updateDetails: repository('Events', eventDetailsColumns, ' AND deleted_at IS NULL').update,
     async list() {
         const db = await initializeDatabase();
         return db.getAllAsync('SELECT * FROM Events WHERE deleted_at IS NULL AND archived_at IS NULL ORDER BY id DESC');

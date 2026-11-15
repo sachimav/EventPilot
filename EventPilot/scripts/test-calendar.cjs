@@ -1,0 +1,50 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const ts = require('typescript');
+process.env.TZ = 'Asia/Colombo';
+const cache = new Map();
+function load(file) {
+  if (!file.endsWith('.js')) file += '.js';
+  if (cache.has(file)) return cache.get(file);
+  const exports = {};
+  cache.set(file, exports);
+  const { outputText } = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+  });
+  vm.runInNewContext(outputText, { exports, TextEncoder, require: id => load(path.resolve(path.dirname(file), id)) });
+  return exports;
+}
+const { validCalendarMonth, shiftCalendarMonth } = load(path.resolve(__dirname, '../src/utils/calendar'));
+const { validDate } = load(path.resolve(__dirname, '../src/utils/eventForm'));
+const { calendarAgenda } = load(path.resolve(__dirname, '../src/utils/eventExports'));
+for (const month of ['0001-01', '0099-02', '2028-02', '9999-12']) assert.equal(validCalendarMonth(month), true);
+for (const month of ['0000-01', '10000-01', '-1-12-1', '2026-00', '2026-13', '', null]) assert.equal(validCalendarMonth(month), false);
+assert.equal(shiftCalendarMonth('0001-01', -1), null);
+assert.equal(shiftCalendarMonth('9999-12', 1), null);
+assert.equal(shiftCalendarMonth('0000-01', -1), null);
+assert.equal(shiftCalendarMonth('2026-12', 1), '2027-01');
+assert.equal(shiftCalendarMonth('2027-01', -1), '2026-12');
+assert.equal(shiftCalendarMonth('0099-12', 1), '0100-01');
+assert.equal(validDate('0001-01-01'), true);
+assert.equal(validDate('0096-02-29'), true);
+assert.equal(validDate('0099-02-29'), false);
+const event = { id: 1, name: 'Conference', date: '2026-12-20', time: '09:00', end_date: '2026-12-22', end_time: '18:00' };
+const dates = (input, month) => Array.from(calendarAgenda([input], [], [], month), row => row.date);
+assert.deepEqual(dates(event, '2026-12'), ['2026-12-20', '2026-12-21', '2026-12-22']);
+assert.equal(new Set(calendarAgenda([event], [], [], '2026-12').map(row => row.key)).size, 3);
+assert.deepEqual(dates({ ...event, end_time: '00:00' }, '2026-12'), ['2026-12-20', '2026-12-21']);
+assert.deepEqual(dates({ ...event, end_date: null }, '2026-12'), ['2026-12-20']);
+assert.deepEqual(dates({ ...event, status: 'cancelled' }, '2026-12'), []);
+assert.deepEqual(dates(event, '0000-01'), []);
+const crossing = { ...event, date: '2028-02-28', end_date: '2028-03-02' };
+assert.deepEqual(dates(crossing, '2028-02'), ['2028-02-28', '2028-02-29']);
+assert.deepEqual(dates(crossing, '2028-03'), ['2028-03-01', '2028-03-02']);
+assert.deepEqual(dates({ ...event, date: '2026-12-31', end_date: '2027-01-02' }, '2027-01'), ['2027-01-01', '2027-01-02']);
+assert.equal(dates({ ...event, date: '0001-01-01', end_date: '9999-12-31' }, '2026-12').length, 31);
+assert.deepEqual(dates({ ...event, date: '9999-12-31', end_date: '9999-12-31' }, '9999-12'), ['9999-12-31']);
+const rows = calendarAgenda([event], [{ id: 2, event_id: 1, title: 'Local deadline', due_at: '2026-11-30T20:00:00Z', completed: 0 }], [], '2026-12');
+assert.equal(rows[0].date, '2026-12-01');
+assert.equal(rows[0].time, '01:30');
+console.log('Calendar passed: multi-day occupancy, midnight ends, month/year crossings, leap days, bounded expansion, local deadlines, and valid year limits.');

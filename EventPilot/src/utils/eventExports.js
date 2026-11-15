@@ -1,5 +1,6 @@
 import { formatLkr } from './budgetManager';
-import { dateString, timeString } from './eventForm';
+import { dateString, timeString, validDate } from './eventForm';
+import { validCalendarMonth } from './calendar';
 export function csv(rows) {
     return '\uFEFF' + rows.map((row) => row.map((value) => {
         let text = String(value ?? '');
@@ -60,12 +61,27 @@ export function eventReport(event, tasks, expenses, activities, guests, vendors)
         + section('Budget', expenses.map((row) => `${escape(row.category)} — ${escape(row.title)}: estimated ${formatLkr(row.estimated_cents)}, actual ${formatLkr(row.amount_cents)}`))
         + section('Vendors', vendors.map((row) => `${escape(row.name)} — ${escape(row.service)} — ${escape(row.booking_status)} — ${escape(row.phone)}`)) + '</body></html>';
 }
-export function calendarAgenda(events, tasks, activities) {
+export function calendarAgenda(events, tasks, activities, month = dateString(new Date()).slice(0, 7)) {
+    if (!validCalendarMonth(month)) return [];
     const validIds = new Set(events.map((event) => event.id));
     const rows = [];
-    for (const event of events)
-        if (event.date && event.status !== 'cancelled')
-            rows.push({ key: `e${event.id}`, eventId: event.id, title: event.name, type: 'Event', date: event.date, time: event.time ?? '' });
+    for (const event of events) {
+        if (!validDate(event.date ?? '') || event.status === 'cancelled') continue;
+        let finish = validDate(event.end_date ?? '') && event.end_date >= event.date ? event.end_date : event.date;
+        // An interval ending exactly at midnight does not occupy the following day.
+        if (finish > event.date && event.end_time === '00:00') {
+            const last = new Date(`${finish}T12:00:00`);
+            last.setDate(last.getDate() - 1);
+            finish = dateString(last);
+        }
+        // Expand only the requested month, even for very long event durations.
+        const start = event.date > `${month}-01` ? event.date : `${month}-01`;
+        const limit = finish < `${month}-31` ? finish : `${month}-31`;
+        const day = new Date(`${start}T12:00:00`);
+        for (let date = start; date <= limit && date.startsWith(month); day.setDate(day.getDate() + 1), date = dateString(day)) {
+            rows.push({ key: `e${event.id}-${date}`, eventId: event.id, title: event.name, type: 'Event', date, time: date === event.date ? event.time ?? '' : '00:00' });
+        }
+    }
     for (const [type, data] of [['Task', tasks], ['Activity', activities]])
         for (const row of data) {
             const value = 'due_at' in row ? row.due_at : row.starts_at;
@@ -74,7 +90,8 @@ export function calendarAgenda(events, tasks, activities) {
             const date = new Date(value);
             if (!Number.isFinite(date.getTime()))
                 continue;
-            rows.push({ key: `${type}${row.id}`, eventId: row.event_id, title: row.title, type, date: dateString(date), time: timeString(date) });
+            if (dateString(date).startsWith(month))
+                rows.push({ key: `${type}${row.id}`, eventId: row.event_id, title: row.title, type, date: dateString(date), time: timeString(date) });
         }
     return rows.sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`));
 }

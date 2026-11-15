@@ -2,7 +2,7 @@ export const emptyEvent = {
     title: '', description: '', category: '', date: '', time: '', location: '', budget: '',
 };
 export function dateString(value) {
-    return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+    return `${String(value.getFullYear()).padStart(4, '0')}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
 }
 export function timeString(value) {
     return `${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`;

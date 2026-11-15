@@ -17,7 +17,7 @@ export default function EventEditor({ id }) {
         const request = id === null ? Promise.resolve(null) : events.getById(id);
         request.then((result) => {
             if (active) {
-                setEvent(result);
+                setEvent(result?.deleted_at ? null : result);
                 setLoading(false);
             }
         }, (cause) => {
@@ -34,9 +34,9 @@ export default function EventEditor({ id }) {
     if (error)
         return <EmptyState title="Unable to load event" description="Please try again." action={<AppButton title="Retry" onPress={() => { setLoading(true); setError(false); setAttempt((value) => value + 1); }}/>}/>;
     if (!event)
-        return <EmptyState title="Event not found" description="This event may have been deleted." action={<AppButton title="Browse events" href="/events"/>}/>;
+        return <EmptyState title="Event not found" description="This event may have been moved to Trash. Restore it in Data & recovery before editing." action={<AppButton title="Data & recovery" href="/data"/>}/>;
     return <EventForm key={event.id} initialValues={fromEvent(event)} currency={event.currency} onSave={async (input) => {
-            const changed = await events.update(event.id, input);
+            const changed = await events.updateDetails(event.id, input);
             if (!changed) {
                 setEvent(null);
                 return;

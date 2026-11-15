@@ -1,6 +1,50 @@
 const { test, expect } = require('@playwright/test');
 const fs = require('node:fs/promises');
 
+test('regression: multi-day calendar and supported month boundaries', async ({ page }) => {
+  await page.goto('/events/create');
+  await fillEvent(page, 'Three-day conference');
+  await page.getByLabel('End date (optional)', { exact: true }).fill('2026-12-22');
+  await page.getByLabel('End time (optional)', { exact: true }).fill('18:00');
+  await page.getByRole('button', { name: 'Save event', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Event tasks', exact: true })).toBeVisible();
+  await page.goto('/calendar');
+  const month = page.getByLabel('Month (YYYY-MM)', { exact: true });
+  await month.fill('2026-12');
+  for (const day of ['20', '21', '22']) {
+    await page.getByRole('button', { name: `2026-12-${day}, 1 scheduled items`, exact: true }).click();
+    await expect(page.getByText('Three-day conference', { exact: true })).toBeVisible();
+  }
+  await month.fill('0000-01');
+  await expect(page.getByText('Enter a valid month (YYYY-MM), with a year from 0001 to 9999.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Previous month', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Next month', exact: true })).toBeDisabled();
+  await month.fill('0001-01');
+  await expect(page.getByRole('button', { name: 'Previous month', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Next month', exact: true }).click();
+  await expect(month).toHaveValue('0001-02');
+  await month.fill('9999-12');
+  await expect(page.getByRole('button', { name: 'Next month', exact: true })).toBeDisabled();
+});
+
+test('regression: trashed event edit links require restore', async ({ page }) => {
+  await page.goto('/events/create');
+  await fillEvent(page, 'Trash guard event');
+  await page.getByRole('button', { name: 'Save event', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Event tasks', exact: true })).toBeVisible();
+  const eventPath = new URL(page.url()).pathname;
+  await page.getByRole('button', { name: 'Delete event', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm deletion', exact: true }).click();
+  await expect(page).toHaveURL(/\/events$/);
+  await page.goto(`${eventPath}/edit`);
+  await expect(page.getByText('Event not found', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Title *', { exact: true })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Data & recovery', exact: true }).click();
+  await page.getByRole('button', { name: 'Restore event', exact: true }).click();
+  await page.goto(`${eventPath}/edit`);
+  await expect(page.getByLabel('Title *', { exact: true })).toHaveValue('Trash guard event');
+});
+
 async function fillEvent(page, title) {
   await page.getByLabel('Title *', { exact: true }).fill(title);
   await page.getByLabel('Description', { exact: true }).fill('Plan a memorable evening with friends.');
