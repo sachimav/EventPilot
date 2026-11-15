@@ -7,6 +7,7 @@ Built with React Native, Expo, JavaScript, and SQLite, EventPilot provides a sha
 ## Contents
 
 - [Project overview](#project-overview)
+- [Screenshots](#screenshots)
 - [Problem statement](#problem-statement)
 - [Objectives](#objectives)
 - [Features](#features)
@@ -26,6 +27,33 @@ Built with React Native, Expo, JavaScript, and SQLite, EventPilot provides a sha
 
 EventPilot helps organizers manage weddings, birthdays, conferences, and other events from initial planning through completion. Each event has its own tasks, expenses, activities, guest list, and vendor records.
 
+
+## Screenshots
+
+The five main tabs of EventPilot, captured on a mobile screen.
+
+<table>
+  <tr>
+    <th>Home</th>
+    <th>Events</th>
+    <th>Tasks</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/home.jpg" alt="EventPilot Home with Create Event and quick actions" width="240" /></td>
+    <td><img src="docs/screenshots/events.jpg" alt="My Events with search, category filters, and a saved event" width="240" /></td>
+    <td><img src="docs/screenshots/tasks.jpg" alt="Task Manager with event, priority, and status filters and task counts" width="240" /></td>
+  </tr>
+  <tr>
+    <th>Budget</th>
+    <th>Calendar</th>
+    <th></th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/budget.jpg" alt="Budget Manager showing the event budget, estimated expenses, and actual expenses in rupees" width="240" /></td>
+    <td><img src="docs/screenshots/calendar.jpg" alt="Calendar month grid with scheduled task and event entries" width="240" /></td>
+    <td></td>
+  </tr>
+</table>
 
 ## Problem statement
 
