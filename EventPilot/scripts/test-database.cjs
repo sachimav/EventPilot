@@ -17,7 +17,7 @@ function loadModules() {
     if (cache[name]) return cache[name].exports;
     const module = { exports: {} };
     cache[name] = module;
-    const source = fs.readFileSync(path.join(__dirname, '../src/database', `${name}.ts`), 'utf8');
+    const source = fs.readFileSync(path.join(__dirname, '../src/database', `${name}.js`), 'utf8');
     const { outputText } = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } });
     vm.runInNewContext(outputText, {
       exports: module.exports,

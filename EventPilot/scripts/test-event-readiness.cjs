@@ -8,12 +8,12 @@ function load(file) {
   const { outputText } = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
   });
-  const context = { exports: {}, require: (id) => load(path.resolve(path.dirname(file), `${id}.ts`)) };
+  const context = { exports: {}, require: (id) => load(path.resolve(path.dirname(file), `${id}.js`)) };
   vm.runInNewContext(outputText, context);
   return context.exports;
 }
-const { migrations } = load(path.join(__dirname, '../src/database/schema.ts'));
-const { calculateReadiness, readinessForEvent, readinessByEvent } = load(path.join(__dirname, '../src/utils/eventReadiness.ts'));
+const { migrations } = load(path.join(__dirname, '../src/database/schema.js'));
+const { calculateReadiness, readinessForEvent, readinessByEvent } = load(path.join(__dirname, '../src/utils/eventReadiness.js'));
 assert.equal(calculateReadiness(0, 0).percentage, null);
 assert.equal(calculateReadiness(0, 1).percentage, 0);
 assert.equal(calculateReadiness(1, 1).percentage, 100);

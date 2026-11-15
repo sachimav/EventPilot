@@ -123,7 +123,7 @@ test('task actions recover after an event is removed while editing', async ({ pa
   await expect(page.getByRole('link', { name: 'Event tasks', exact: true })).toBeVisible();
   await page.goto('/tasks');
   await page.getByRole('button', { name: 'Edit task', exact: true }).click();
-  await page.getByRole('tab', { name: /My Events/ }).click();
+  await page.getByRole('tab', { name: /Events/ }).click();
   await page.getByRole('link', { name: 'View First event', exact: true }).click();
   await page.getByRole('button', { name: 'Delete event', exact: true }).click();
   await page.getByRole('button', { name: 'Confirm deletion', exact: true }).click();

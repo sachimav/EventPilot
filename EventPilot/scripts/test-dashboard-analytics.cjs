@@ -8,12 +8,12 @@ function load(file) {
   const { outputText } = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
   });
-  const context = { exports: {}, require: (id) => load(path.resolve(path.dirname(file), `${id}.ts`)) };
+  const context = { exports: {}, require: (id) => load(path.resolve(path.dirname(file), `${id}.js`)) };
   vm.runInNewContext(outputText, context);
   return context.exports;
 }
-const { migrations } = load(path.join(__dirname, '../src/database/schema.ts'));
-const { dashboardRecordAnalytics, dashboardTaskAnalytics } = load(path.join(__dirname, '../src/utils/dashboardAnalytics.ts'));
+const { migrations } = load(path.join(__dirname, '../src/database/schema.js'));
+const { dashboardRecordAnalytics, dashboardTaskAnalytics } = load(path.join(__dirname, '../src/utils/dashboardAnalytics.js'));
 const db = new DatabaseSync(':memory:');
 try {
   db.exec('PRAGMA foreign_keys = ON');

@@ -1,6 +1,6 @@
 # Offline database
 
-`src/database/index.ts` exports the database initializer and typed repositories.
+`src/database/index.js` exports the database initializer and repositories.
 The root layout waits for initialization before mounting the router. Failures
 show a retry button; failed opens close their connection and can be retried.
 Event list, create, edit, details, and delete screens use the repositories. Lists
@@ -44,7 +44,7 @@ Deletion requires explicit confirmation and warns about cascading child records.
 
 ## Migrations
 
-`schema.ts` contains ordered, append-only migrations. Initialization reads
+`schema.js` contains ordered, append-only migrations. Initialization reads
 `PRAGMA user_version`, runs pending migrations, and updates the version in a single
 transaction. A failure rolls back both schema and version. A newer database version
 is rejected rather than overwritten. There is no destructive reset or sample seeding.
@@ -130,7 +130,7 @@ checks also cover priority constraints, migration, and persistence after reopeni
 
 ## Smart task deadlines
 
-`src/utils/taskDeadlines.ts` provides reusable status, counting, and sorting
+`src/utils/taskDeadlines.js` provides reusable status, counting, and sorting
 functions. All accept an explicit current timestamp for deterministic tests.
 Completed takes precedence. Incomplete tasks are Overdue if their deadline is
 strictly before now; Urgent if due now through exactly 48 elapsed hours from now;
@@ -223,7 +223,7 @@ Every create/edit save reads the latest event activities from SQLite and checks
 `newStart < existingEnd && newEnd > existingStart`. Adjacent intervals are allowed.
 Comparison uses timestamps including the date; only the same event is checked and
 the edited activity's ID is excluded. Invalid or unscheduled legacy intervals do
-not count as conflicts. Reusable helpers live in `src/utils/activityConflicts.ts`.
+not count as conflicts. Reusable helpers live in `src/utils/activityConflicts.js`.
 
 Conflicts block saving and display titles, local dates, and time ranges. The user
 can keep editing or explicitly choose "Save anyway — allow overlap". Changing any
@@ -237,7 +237,7 @@ isolation, edit exclusion, and stale-confirmation checks against SQLite records.
 
 ## Event Readiness
 
-`src/utils/eventReadiness.ts` calculates `completedTasks / totalTasks * 100`
+`src/utils/eventReadiness.js` calculates `completedTasks / totalTasks * 100`
 using actual event task records (`completed = 1`), with helpers for one event or
 all events in a single pass. Zero tasks returns a null percentage, shown as
 **Not Assessed** with an empty progress track. Pending-only events are 0%; only
@@ -266,7 +266,7 @@ exact integer comparisons. Actual overspending takes precedence, including spend
 against zero budgets. Warnings show up to three events, counts, rupee amounts,
 utilization bars, and links to the existing event/budget screens.
 
-`dashboardAnalytics.ts` reuses task deadline, readiness, and budget utilities.
+`dashboardAnalytics.js` reuses task deadline, readiness, and budget utilities.
 Monetary analytics are memoized per SQLite refresh; only time-sensitive counts
 recompute from the focused screen clock. Successful Event/Task/Expense repository
 writes invalidate Home immediately. Navigation focus also reloads SQLite; clock
@@ -291,7 +291,7 @@ not double-count expense costs. Outstanding balance uses actual cost, falling ba
 estimated cost when actual is zero. Overpayments are shown for review. Receipt PNG,
 JPEG and PDF files up to 2 MB are stored as data URLs in SQLite and included in backups.
 
-`backups.ts` exports a versioned JSON snapshot including archived/deleted records.
+`backups.js` exports a versioned JSON snapshot including archived/deleted records.
 Restore validates the format, table fields/IDs, SQLite constraints and foreign keys,
 then appends copies with remapped IDs inside a transaction. Any failure rolls back the
 entire import. Existing records are preserved. The file-size limit is 10 MB; repeated

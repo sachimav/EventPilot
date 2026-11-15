@@ -7,12 +7,12 @@ function load(file) {
   const { outputText } = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
   });
-  const context = { exports: {}, require: (id) => load(path.resolve(path.dirname(file), `${id}.ts`)) };
+  const context = { exports: {}, require: (id) => load(path.resolve(path.dirname(file), `${id}.js`)) };
   vm.runInNewContext(outputText, context);
   return context.exports;
 }
-const { getTaskStatus, countTaskStatuses, sortTasksByDeadline, URGENT_WINDOW_MS } = load(path.join(__dirname, '../src/utils/taskDeadlines.ts'));
-const { filterTasks, defaultTaskFilters } = load(path.join(__dirname, '../src/utils/taskManager.ts'));
+const { getTaskStatus, countTaskStatuses, sortTasksByDeadline, URGENT_WINDOW_MS } = load(path.join(__dirname, '../src/utils/taskDeadlines.js'));
+const { filterTasks, defaultTaskFilters } = load(path.join(__dirname, '../src/utils/taskManager.js'));
 const now = Date.parse('2026-11-14T10:00:00.000+05:30');
 const task = (id, delta, completed = 0) => ({ id, event_id: 1, title: `Task ${id}`, notes: '', priority: 'medium', completed,
   due_at: delta === null ? null : new Date(now + delta).toISOString() });

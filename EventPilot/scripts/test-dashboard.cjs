@@ -12,13 +12,13 @@ function load(file) {
   });
   const context = {
     exports: {},
-    require: (id) => load(path.resolve(path.dirname(file), `${id}.ts`)),
+    require: (id) => load(path.resolve(path.dirname(file), `${id}.js`)),
   };
   vm.runInNewContext(outputText, context);
   return context.exports;
 }
-const { summarizeEvents } = load(path.join(__dirname, '../src/utils/dashboard.ts'));
-const { migrations } = load(path.join(__dirname, '../src/database/schema.ts'));
+const { summarizeEvents } = load(path.join(__dirname, '../src/utils/dashboard.js'));
+const { migrations } = load(path.join(__dirname, '../src/database/schema.js'));
 const db = new DatabaseSync(':memory:');
 try {
   for (const sql of migrations) db.exec(sql);

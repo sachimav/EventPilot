@@ -27,7 +27,7 @@
     "preview": "node scripts/preview-web.cjs",
     "test:e2e": "playwright test",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --project jsconfig.json --noEmit"
   },
   "private": true,
   "devDependencies": {

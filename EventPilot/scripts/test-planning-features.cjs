@@ -18,7 +18,7 @@ const bridge = {
 };
 function load(file) {
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index');
-  if (!file.endsWith('.ts')) file += '.ts';
+  if (!file.endsWith('.js')) file += '.js';
   if (modules.has(file)) return modules.get(file).exports;
   const module = { exports: {} }; modules.set(file,module);
   const { outputText } = ts.transpileModule(fs.readFileSync(file,'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } });
