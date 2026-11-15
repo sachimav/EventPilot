@@ -3,6 +3,7 @@ import type { CreateEvent, Event } from '../database/repositories';
 export interface EventValues {
   title: string; description: string; category: string; date: string;
   time: string; location: string; budget: string;
+  endDate?: string; endTime?: string; status?: Event['status'];
 }
 export type EventErrors = Partial<Record<keyof EventValues, string>>;
 
@@ -36,6 +37,12 @@ export function validateEvent(values: EventValues): EventErrors {
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(values.time)) errors.time = 'Choose a valid time.';
   if (!values.location.trim()) errors.location = 'Enter a location.';
   if (budgetCents(values.budget) === null) errors.budget = 'Enter a nonnegative budget with up to two decimal places.';
+  if (values.status && !['draft','planning','ready','ongoing','completed','cancelled'].includes(values.status)) errors.status = 'Choose a valid event status.';
+  if (values.endDate || values.endTime) {
+    if (!validDate(values.endDate ?? '')) errors.endDate = 'Choose a valid end date.';
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(values.endTime ?? '')) errors.endTime = 'Choose a valid end time.';
+    if (!errors.endDate && !errors.endTime && `${values.endDate}T${values.endTime}` <= `${values.date}T${values.time}`) errors.endTime = 'Event end must be after its start.';
+  }
   return errors;
 }
 export function toEventInput(values: EventValues): CreateEvent {
@@ -43,12 +50,14 @@ export function toEventInput(values: EventValues): CreateEvent {
   return {
     name: values.title.trim(), notes: values.description.trim(), category: values.category.trim(),
     date: values.date, time: values.time, location: values.location.trim(), budget_cents: budgetCents(values.budget)!,
+    end_date: values.endDate || null, end_time: values.endTime || null, status: values.status ?? 'planning',
   };
 }
 export function fromEvent(event: Event): EventValues {
   return {
     title: event.name, description: event.notes, category: event.category,
     date: event.date ?? '', time: event.time ?? '', location: event.location,
+    endDate: event.end_date ?? '', endTime: event.end_time ?? '', status: event.status ?? 'planning',
     budget: `${Math.floor(event.budget_cents / 100)}.${String(event.budget_cents % 100).padStart(2, '0')}`,
   };
 }

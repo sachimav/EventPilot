@@ -1,5 +1,5 @@
 import type { Event } from '../database/repositories';
-import { currentMinute, eventStart } from './eventSchedule';
+import { eventPeriod, eventStart } from './eventSchedule';
 
 export type EventPeriod = 'all' | 'upcoming' | 'past';
 export interface EventFilters { search: string; category: string | null; period: EventPeriod }
@@ -22,12 +22,10 @@ export function eventCategories(rows: readonly Event[]): { value: string; label:
 export function filterEvents(rows: readonly Event[], filters: EventFilters, now: Date): Event[] {
   const search = normalize(filters.search);
   const category = filters.category === null ? null : normalize(filters.category);
-  const minute = currentMinute(now);
-  return rows.map((event) => ({ event, start: eventStart(event) })).filter(({ event, start }) => {
+  return rows.map((event) => ({ event, start: eventStart(event) })).filter(({ event }) => {
     if (search && !normalize(event.name).includes(search) && !normalize(event.location).includes(search)) return false;
     if (category !== null && normalize(event.category) !== category) return false;
-    if (filters.period === 'upcoming' && (start === null || start < minute)) return false;
-    if (filters.period === 'past' && (start === null || start >= minute)) return false;
+    if (filters.period !== 'all' && eventPeriod(event, now) !== filters.period) return false;
     return true;
   }).sort((a, b) => {
     // Unscheduled events appear last in All; ID keeps equal starts deterministic.

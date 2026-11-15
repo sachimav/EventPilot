@@ -4,6 +4,7 @@ import { expenses, type Expense } from '../database';
 import { formatLkr } from '../utils/budgetManager';
 import { cardStyle, colors, spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
+import ExpensePayments from './ExpensePayments';
 
 export default function ExpenseCard({ expense, disabled, onEdit, onChange }: {
   expense: Expense; disabled: boolean; onEdit: () => void; onChange: () => void;
@@ -11,6 +12,7 @@ export default function ExpenseCard({ expense, disabled, onEdit, onChange }: {
   const [confirm, setConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
+  const [showPayments, setShowPayments] = useState(false);
   const pending = useRef(false);
   async function remove() {
     if (pending.current) return;
@@ -32,6 +34,8 @@ export default function ExpenseCard({ expense, disabled, onEdit, onChange }: {
     {!!expense.notes && <Text style={{ ...typography.body, color: colors.text }}>{expense.notes}</Text>}
     <Text style={{ ...typography.body, color: colors.text }}>Estimated: {formatLkr(expense.estimated_cents)}</Text>
     <Text style={{ ...typography.body, color: colors.heading }}>Actual: {formatLkr(expense.amount_cents)}</Text>
+    <AppButton title={showPayments ? 'Hide payments & receipts' : 'Payments & receipts'} variant="secondary" disabled={locked} onPress={() => setShowPayments((value) => !value)} />
+    {showPayments && <ExpensePayments expense={expense} onChange={onChange} />}
     {confirm ? <>
       <Text accessibilityRole="alert" style={{ color: colors.danger }}>Permanently delete this expense?</Text>
       <AppButton title={deleting ? 'Deleting…' : 'Confirm deletion'} onPress={remove} disabled={locked} />

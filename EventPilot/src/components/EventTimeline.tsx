@@ -23,7 +23,7 @@ export default function EventTimeline({ id }: { id: number | null }) {
   const editingForm = creating || editing !== null;
   if (loading && !data) return <ActivityIndicator color={colors.primary} accessibilityLabel="Loading timeline" />;
   if (!data) return <EmptyState title="Unable to load timeline" description="Please try reading your local schedule again." action={<AppButton title="Retry" onPress={retry} />} />;
-  if (!data.event) return <EmptyState title="Event not found" description="This event may have been deleted." action={<AppButton title="Browse events" href="/events" />} />;
+  if (!data.event || data.event.deleted_at) return <EmptyState title="Event not found" description="This event may have been moved to Trash." action={<AppButton title="Browse events" href="/events" />} />;
   const event = data.event;
   return <View style={styles.content}>
     <Text accessibilityRole="header" style={styles.title}>{event.name}</Text>

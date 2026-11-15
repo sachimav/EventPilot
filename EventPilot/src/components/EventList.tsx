@@ -63,7 +63,7 @@ export default function EventList({ limit }: { limit?: number }) {
               : visible.slice(0, limit).map((event) => <EventCard key={event.id} title={event.name} date={eventDate(event)}
                 location={event.location || 'Venue to be decided'} status={event.category}
                 href={{ pathname: '/events/[id]', params: { id: event.id } }} />)}
-            <Text style={styles.hint}>Upcoming and past use the scheduled start time. Undated events appear last in All events.</Text>
+            <Text style={styles.hint}>Upcoming includes ongoing events until their end. Completed and cancelled statuses are respected. Undated events appear last in All events.</Text>
           </>}
   </View>;
 }

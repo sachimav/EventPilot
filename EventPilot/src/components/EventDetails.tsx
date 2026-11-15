@@ -11,6 +11,7 @@ import EmptyState from './EmptyState';
 import EventReadiness from './EventReadiness';
 import { readinessForEvent } from '../utils/eventReadiness';
 import QuickActions from './QuickActions';
+import { duplicateEvent } from '../database/planning';
 
 export default function EventDetails({ id }: { id: number | null }) {
   const query = useCallback(async () => {
@@ -22,6 +23,8 @@ export default function EventDetails({ id }: { id: number | null }) {
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [actionBusy,setActionBusy] = useState(false);
+  const [actionError,setActionError] = useState('');
   const pending = useRef(false);
   async function remove() {
     if (pending.current || id === null) return;
@@ -29,7 +32,7 @@ export default function EventDetails({ id }: { id: number | null }) {
     setDeleting(true);
     setDeleteError('');
     try {
-      await events.delete(id);
+      await events.update(id, { deleted_at: new Date().toISOString() });
       router.replace('/events');
     } catch (cause) {
       console.error('Unable to delete event', cause);
@@ -39,30 +42,45 @@ export default function EventDetails({ id }: { id: number | null }) {
   if (loading) return <ActivityIndicator color={colors.primary} accessibilityLabel="Loading event" />;
   if (error) return <EmptyState title="Unable to load event" description="Please try again."
     action={<AppButton title="Retry" onPress={retry} />} />;
-  if (!data) return <EmptyState title="Event not found" description="This event may have been deleted."
+  if (!data || data.event.deleted_at) return <EmptyState title="Event not found" description="This event may have been moved to Trash."
     action={<AppButton title="Browse events" href="/events" />} />;
   const { event, readiness } = data;
   return <>
     <EventCard title={event.name} date={eventDate(event)} location={event.location || 'Venue to be decided'} status={event.category} />
     <View style={cardStyle}><EventReadiness readiness={readiness} /></View>
     <QuickActions title="Manage this event" actions={[
+      { title: 'Event guests', description: 'Track RSVP and check in guests', icon: 'people-outline', href: { pathname: '/events/[id]/guests', params: { id: event.id } } },
+      { title: 'Event vendors', description: 'Manage contacts and bookings', icon: 'briefcase-outline', href: { pathname: '/events/[id]/vendors', params: { id: event.id } } },
       { title: 'Event tasks', description: 'Add and complete your checklist', icon: 'checkbox-outline', href: { pathname: '/events/[id]/tasks', params: { id: event.id } } },
       { title: 'Event budget', description: 'Add expenses and track spending', icon: 'wallet-outline', href: { pathname: '/events/[id]/budget', params: { id: event.id } } },
       { title: 'Event timeline', description: 'Schedule activities for the day', icon: 'time-outline', href: { pathname: '/events/[id]/timeline', params: { id: event.id } } },
+      { title: 'Reports & sharing', description: 'Export guest lists, budgets and calendars', icon: 'document-text-outline', href: { pathname: '/events/[id]/reports', params: { id: event.id } } },
     ]} />
     <View style={{ ...cardStyle, gap: spacing.md }}>
+      <Text style={{ ...typography.label, color: colors.primary }}>Status: {event.status ?? 'planning'}</Text>
+      {!!event.end_date && <Text style={{ color: colors.text }}>Ends: {event.end_date} {event.end_time}</Text>}
       <Text style={{ ...typography.heading, color: colors.heading }}>Description</Text>
       <Text style={{ ...typography.body, color: colors.text }}>{event.notes || 'No description added.'}</Text>
       <Text style={{ ...typography.heading, color: colors.heading }}>Total budget</Text>
       <Text style={{ ...typography.body, color: colors.text }}>{event.currency} {(event.budget_cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
     </View>
     {!confirming ? <>
+      <AppButton title="Duplicate event" variant="secondary" icon="copy-outline" disabled={actionBusy} onPress={async () => {
+        setActionBusy(true); setActionError('');
+        try { const copy = await duplicateEvent(event.id); router.push({ pathname: '/events/[id]/edit', params: { id: copy } }); } catch (cause) { setActionError(String(cause)); } finally { setActionBusy(false); }
+      }} />
+      <Text style={{ color: colors.text }}>Duplicate copies the plan as a draft, resets task completion and spending, and clears dates. Guests and payment history are not copied.</Text>
+      <AppButton title="Archive event" variant="secondary" icon="archive-outline" disabled={actionBusy} onPress={async () => {
+        setActionBusy(true); setActionError('');
+        try { await events.update(event.id, { archived_at: new Date().toISOString() }); router.replace('/events'); } catch (cause) { setActionError(String(cause)); } finally { setActionBusy(false); }
+      }} />
+      {!!actionError && <Text accessibilityRole="alert" style={{ color: colors.danger }}>{actionError}</Text>}
       <AppButton title="Edit event" icon="create-outline" href={{ pathname: '/events/[id]/edit', params: { id: event.id } }} />
       <AppButton title="View timeline" href={{ pathname: '/events/[id]/timeline', params: { id: event.id } }} variant="secondary" />
       <AppButton title="Delete event" icon="trash-outline" variant="danger" onPress={() => setConfirming(true)} />
     </> : <View style={{ ...cardStyle, gap: spacing.lg }}>
       <Text accessibilityRole="header" style={{ ...typography.heading, color: colors.danger }}>Delete this event?</Text>
-      <Text style={{ ...typography.body, color: colors.text }}>“{event.name}” and all its tasks, expenses, and activities will be permanently deleted.</Text>
+      <Text style={{ ...typography.body, color: colors.text }}>“{event.name}” will move to Trash. Its records can be recovered from Data & recovery.</Text>
       {!!deleteError && <Text accessibilityRole="alert" style={{ color: colors.danger }}>{deleteError}</Text>}
       <AppButton title={deleting ? 'Deleting…' : 'Confirm deletion'} disabled={deleting} onPress={remove} />
       <AppButton title="Cancel" variant="secondary" disabled={deleting} onPress={() => { setConfirming(false); setDeleteError(''); }} />

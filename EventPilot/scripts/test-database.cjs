@@ -142,7 +142,7 @@ function loadModules() {
   for (const repo of [api.tasks, api.expenses, api.activities]) assert.equal((await repo.listByEvent(id)).length, 0);
   assert.equal(await api.events.delete(id), false);
   // A conflicting fresh schema must roll back earlier DDL and user_version.
-  connection.exec('DROP TABLE Activities; DROP TABLE Expenses; DROP TABLE Tasks; DROP TABLE Events; CREATE TABLE Tasks (id INTEGER); PRAGMA user_version = 0;');
+  connection.exec('DROP TABLE Reminders; DROP TABLE Receipts; DROP TABLE Payments; DROP TABLE Guests; DROP TABLE Vendors; DROP TABLE Activities; DROP TABLE Expenses; DROP TABLE Tasks; DROP TABLE Events; CREATE TABLE Tasks (id INTEGER); PRAGMA user_version = 0;');
   connection.close();
   api = loadModules();
   await assert.rejects(api.initializeDatabase());
@@ -158,6 +158,7 @@ function loadModules() {
   await assert.rejects(api.initializeDatabase(), /newer version/);
   // Simulate an existing v1 installation and verify its records survive upgrade.
   const old = new DatabaseSync(filename);
+  old.exec('DROP TABLE Reminders; DROP TABLE Receipts; DROP TABLE Payments; DROP TABLE Guests; DROP TRIGGER expenses_vendor_insert; DROP TRIGGER expenses_vendor_update; ALTER TABLE Expenses DROP COLUMN vendor_id; ALTER TABLE Expenses DROP COLUMN payment_due_at; DROP TABLE Vendors; ALTER TABLE Events DROP COLUMN status; ALTER TABLE Events DROP COLUMN end_date; ALTER TABLE Events DROP COLUMN end_time; ALTER TABLE Events DROP COLUMN archived_at; ALTER TABLE Events DROP COLUMN deleted_at;');
   old.exec('PRAGMA user_version = 1; ALTER TABLE Events DROP COLUMN category; ALTER TABLE Events DROP COLUMN time; DROP INDEX tasks_due_at; ALTER TABLE Tasks DROP COLUMN priority; ALTER TABLE Expenses DROP COLUMN estimated_cents;');
   old.prepare('INSERT INTO Events (name, notes, budget_cents) VALUES (?, ?, ?)').run('Legacy event', 'Keep me', 999);
   old.exec("INSERT INTO Tasks (event_id, title, completed) SELECT id, 'Legacy task', 1 FROM Events LIMIT 1");

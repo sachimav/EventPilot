@@ -11,3 +11,11 @@ export function eventStart(event: Event): string | null {
 export function currentMinute(now: Date): string {
   return `${dateString(now)}T${timeString(now)}`;
 }
+export function eventPeriod(event: Event, now: Date): 'upcoming' | 'past' | 'unscheduled' | 'cancelled' {
+  if (event.status === 'cancelled') return 'cancelled';
+  if (event.status === 'completed') return 'past';
+  const start = eventStart(event); if (!start) return 'unscheduled';
+  const finish = event.end_date && validDate(event.end_date) && /^([01]\d|2[0-3]):[0-5]\d$/.test(event.end_time ?? '')
+    ? `${event.end_date}T${event.end_time}` : start;
+  return (finish > start ? finish : start) < currentMinute(now) ? 'past' : 'upcoming';
+}

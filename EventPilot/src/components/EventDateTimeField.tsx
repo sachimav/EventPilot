@@ -6,10 +6,10 @@ import { colors, spacing } from '../constants/theme';
 import { dateString, timeString, validDate } from '../utils/eventForm';
 
 export interface DateTimeFieldProps {
-  mode: 'date' | 'time'; value: string; onChange: (value: string) => void; error?: string; disabled?: boolean; label?: string;
+  mode: 'date' | 'time'; value: string; onChange: (value: string) => void; error?: string; disabled?: boolean; label?: string; required?: boolean;
 }
 
-export default function EventDateTimeField({ mode, value, onChange, error, disabled, label: customLabel }: DateTimeFieldProps) {
+export default function EventDateTimeField({ mode, value, onChange, error, disabled, label: customLabel, required = true }: DateTimeFieldProps) {
   const [open, setOpen] = useState(false);
   const label = customLabel ?? (mode === 'date' ? 'Date' : 'Time');
   const selected = mode === 'date' && validDate(value) ? new Date(`${value}T12:00:00`) : new Date();
@@ -18,7 +18,7 @@ export default function EventDateTimeField({ mode, value, onChange, error, disab
     selected.setHours(hours, minutes, 0, 0);
   }
   return <View style={{ gap: spacing.sm }}>
-    <Text style={{ color: colors.heading, fontWeight: '600' }}>{label} *</Text>
+    <Text style={{ color: colors.heading, fontWeight: '600' }}>{label} {required ? '*' : '(optional)'}</Text>
     <AppButton title={value || `Choose ${label.toLowerCase()}`} variant="secondary" disabled={disabled} onPress={() => setOpen(true)} />
     {open && !disabled && <>
       <DateTimePicker mode={mode} value={selected} display={Platform.OS === 'ios' ? 'spinner' : 'default'}

@@ -10,7 +10,7 @@ use SQLite and refresh on navigation focus and after successful mutations.
 The `eventpilot.db` file persists locally across app restarts. No network or
 server is required. WAL mode is enabled, along with foreign keys on every open.
 
-## Schema (version 4)
+## Schema (version 6)
 
 All four tables have an auto-incrementing integer `id` primary key and UTC
 `created_at` / `updated_at` timestamps. Repository updates refresh `updated_at`.
@@ -275,3 +275,44 @@ No chart library, background service, or new schema is needed. Empty datasets sh
 zero counts, Not Assessed progress, and actionable empty states. Read failures show
 retry rather than substitute statistics.
 Run `node scripts/test-dashboard-analytics.cjs` for SQLite-backed aggregate checks.
+
+## Extended planning tools (versions 5–6)
+
+Version 5 adds event status/end date/end time, archive and Trash timestamps, Guests,
+Vendors, Payments, Receipts, and Reminders. All child records cascade with permanent
+event deletion; payments/receipts cascade with their expense. Expense vendor references
+become null when the vendor is removed. Version 6 enforces matching vendor/event
+relationships on expense inserts and updates. Existing rows receive safe defaults.
+
+Guests have name/contact, RSVP, plus-ones (0–20), dietary requirements and check-in.
+Vendors have service/contact, integer quote cents, booking status and notes. Expense
+payment history records positive integer cents, date and method; payment totals do
+not double-count expense costs. Outstanding balance uses actual cost, falling back to
+estimated cost when actual is zero. Overpayments are shown for review. Receipt PNG,
+JPEG and PDF files up to 2 MB are stored as data URLs in SQLite and included in backups.
+
+`backups.ts` exports a versioned JSON snapshot including archived/deleted records.
+Restore validates the format, table fields/IDs, SQLite constraints and foreign keys,
+then appends copies with remapped IDs inside a transaction. Any failure rolls back the
+entire import. Existing records are preserved. The file-size limit is 10 MB; repeated
+imports create duplicates. Original archive/Trash states are preserved on import.
+
+Templates atomically create events with starter tasks and unscheduled activities.
+Duplication copies checklist, expense estimates and unscheduled activity plans as a
+draft, with no dates, completed tasks, actual costs, guests, vendors or payments.
+Events list and global task/expense queries exclude archived/trashed events. Trash
+keeps all child data; Data & recovery restores it or permanently deletes it with
+confirmation. Explicit completed/cancelled status and scheduled end times govern
+upcoming/past filtering. Legacy events without end times retain start-based behavior.
+
+Calendar combines active events, incomplete task deadlines and activities in a month
+agenda. `.ics` export includes calendar alarms 24 hours before event/activity starts;
+events without ends use a one-hour export duration. Calendar apps control delivery.
+Reports are escaped printable HTML; CSV exports neutralize spreadsheet formulas.
+Reminders persist locally and appear in Reminder Center and on Home when due, only
+while the app is open. No background notification service is implemented.
+
+`test-planning-features.cjs` covers new constraints, templates/duplication, payments,
+duration/status, escaped exports, backup remapping/rollback, Trash and cascades.
+Browser tests additionally cover real RSVP/check-in, vendor linking, payments,
+receipt upload, exports, restore, archive recovery, duplication and reminders.

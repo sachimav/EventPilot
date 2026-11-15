@@ -1,4 +1,5 @@
 const { defineConfig } = require('@playwright/test');
+const port = Number(process.env.EVENTPILOT_TEST_PORT || 8084);
 
 module.exports = defineConfig({
   testDir: './e2e',
@@ -7,7 +8,7 @@ module.exports = defineConfig({
   workers: 1,
   use: {
     actionTimeout: 15000,
-    baseURL: 'http://127.0.0.1:8084',
+    baseURL: `http://127.0.0.1:${port}`,
     channel: 'msedge',
     headless: true,
     viewport: { width: 390, height: 844 },
@@ -15,8 +16,8 @@ module.exports = defineConfig({
     screenshot: 'only-on-failure',
   },
   webServer: {
-    command: 'node scripts/preview-web.cjs --port 8084',
-    url: 'http://127.0.0.1:8084',
+    command: `node scripts/preview-web.cjs --port ${port}`,
+    url: `http://127.0.0.1:${port}`,
     timeout: 120000,
     reuseExistingServer: !process.env.CI,
     env: { CI: '1', EXPO_OFFLINE: '1' },

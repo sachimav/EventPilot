@@ -47,6 +47,13 @@ export default function RootLayout() {
         <Stack.Screen name="events/[id]/timeline" options={{ title: 'Event Timeline' }} />
         <Stack.Screen name="events/[id]/tasks" options={{ title: 'Event Tasks' }} />
         <Stack.Screen name="events/[id]/budget" options={{ title: 'Event Budget' }} />
+        <Stack.Screen name="events/[id]/guests" options={{ title: 'Event Guests' }} />
+        <Stack.Screen name="events/[id]/vendors" options={{ title: 'Event Vendors' }} />
+        <Stack.Screen name="events/[id]/reports" options={{ title: 'Reports & Sharing' }} />
+        <Stack.Screen name="guests" options={{ title: 'Guest Management' }} />
+        <Stack.Screen name="vendors" options={{ title: 'Vendor Management' }} />
+        <Stack.Screen name="reminders" options={{ title: 'Reminders' }} />
+        <Stack.Screen name="data" options={{ title: 'Data & Recovery' }} />
       </Stack>
     </>
   );

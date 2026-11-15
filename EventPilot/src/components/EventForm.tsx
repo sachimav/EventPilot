@@ -7,6 +7,7 @@ import { cardStyle, colors, spacing } from '../constants/theme';
 import { emptyEvent, toEventInput, validateEvent, type EventErrors, type EventValues } from '../utils/eventForm';
 import type { CreateEvent } from '../database';
 import { router } from 'expo-router';
+import ChoiceChips from './ChoiceChips';
 
 interface Props {
   initialValues?: EventValues; currency?: string;
@@ -44,6 +45,11 @@ export default function EventForm({ initialValues = emptyEvent, currency = 'LKR'
     <AppInput label="Category *" placeholder="e.g. Wedding, Birthday, Conference" value={values.category} onChangeText={(value) => change('category', value)} error={errors.category} editable={!saving} />
     <EventDateTimeField mode="date" value={values.date} onChange={(value) => change('date', value)} error={errors.date} disabled={saving} />
     <EventDateTimeField mode="time" value={values.time} onChange={(value) => change('time', value)} error={errors.time} disabled={saving} />
+    <EventDateTimeField mode="date" label="End date" required={false} value={values.endDate ?? ''} onChange={(value) => change('endDate', value)} error={errors.endDate} disabled={saving} />
+    <EventDateTimeField mode="time" label="End time" required={false} value={values.endTime ?? ''} onChange={(value) => change('endTime', value)} error={errors.endTime} disabled={saving} />
+    {!!(values.endDate || values.endTime) && <AppButton title="Clear event end" variant="secondary" disabled={saving} onPress={() => setValues((old) => ({ ...old, endDate: '', endTime: '' }))} />}
+    <ChoiceChips label="Event status" value={values.status ?? 'planning'} choices={['draft','planning','ready','ongoing','completed','cancelled'].map((value) => ({ value, label: value }))}
+      onChange={(value) => setValues((old) => ({ ...old, status: value as EventValues['status'] }))} disabled={saving} />
     <AppInput label="Location *" value={values.location} onChangeText={(value) => change('location', value)} error={errors.location} editable={!saving} />
     <AppInput label={`Total budget (${currency}) *`} keyboardType="decimal-pad" placeholder="0.00" value={values.budget} onChangeText={(value) => change('budget', value)} error={errors.budget} editable={!saving} />
     {!!error && <Text accessibilityRole="alert" style={{ color: colors.danger }}>{error}</Text>}

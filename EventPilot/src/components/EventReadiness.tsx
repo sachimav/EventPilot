@@ -9,7 +9,7 @@ export default function EventReadiness({ readiness }: { readiness: Readiness }) 
   const label = assessed ? `${percentage === 100 ? 100 : Math.floor(percentage * 10) / 10}%` : 'Not Assessed';
   return <View style={styles.content}>
     <View style={styles.row}>
-      <Text style={styles.label}>Event Readiness</Text>
+      <Text style={styles.label}>Task Readiness</Text>
       <Text accessibilityLiveRegion="polite" style={styles.value}>{label}</Text>
     </View>
     <View accessibilityRole="progressbar" accessibilityLabel="Event Readiness"

@@ -8,6 +8,7 @@ const icons = {
   events: ['calendar-outline', 'calendar'],
   tasks: ['checkbox-outline', 'checkbox'],
   budget: ['wallet-outline', 'wallet'],
+  calendar: ['calendar-number-outline', 'calendar-number'],
 };
 
 export default function TabLayout() {
@@ -30,6 +31,7 @@ export default function TabLayout() {
       <Tabs.Screen name="events" options={{ title: 'My Events' }} />
       <Tabs.Screen name="tasks" options={{ title: 'Tasks' }} />
       <Tabs.Screen name="budget" options={{ title: 'Budget' }} />
+      <Tabs.Screen name="calendar" options={{ title: 'Calendar' }} />
     </Tabs>
   );
 }

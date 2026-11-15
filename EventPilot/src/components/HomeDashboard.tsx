@@ -3,10 +3,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMemo } from 'react';
-import { events, tasks, expenses, subscribeDataChanges } from '../database';
+import { events, tasks, expenses, reminders, subscribeDataChanges } from '../database';
 import { useFocusQuery } from '../hooks/useFocusQuery';
 import { summarizeEvents } from '../utils/dashboard';
-import { colors, radii, spacing, typography } from '../constants/theme';
+import { cardStyle, colors, radii, spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
 import EmptyState from './EmptyState';
 import StatCard from './StatCard';
@@ -17,13 +17,14 @@ import DashboardInsights from './DashboardInsights';
 import QuickActions from './QuickActions';
 
 async function loadDashboard() {
-  const [eventRows, taskRows, expenseRows] = await Promise.all([events.list(), tasks.list(), expenses.list()]);
-  return { events: eventRows, tasks: taskRows, expenses: expenseRows };
+  const [eventRows, taskRows, expenseRows, reminderRows] = await Promise.all([events.list(), tasks.list(), expenses.list(), reminders.list()]);
+  return { events: eventRows, tasks: taskRows, expenses: expenseRows, reminders: reminderRows };
 }
 
 export default function HomeDashboard() {
   const { data: records, loading, error, retry } = useFocusQuery(loadDashboard, subscribeDataChanges);
   const now = useTaskClock();
+  const dueReminders = records?.reminders.filter((reminder) => !reminder.dismissed && new Date(reminder.remind_at).getTime() <= now) ?? [];
   const readiness = useMemo(() => readinessByEvent(records?.tasks ?? []), [records]);
   const data = useMemo(() => records ? { ...summarizeEvents(records.events, new Date(now)), readiness } : null, [records, now, readiness]);
   return <SafeAreaView style={styles.screen} edges={['left', 'right', 'bottom']}>
@@ -53,15 +54,23 @@ export default function HomeDashboard() {
         { title: 'My events', description: 'Open your event workspace', icon: 'calendar-outline', href: '/events' },
         { title: 'Manage tasks', description: 'Add, edit and complete to-dos', icon: 'checkbox-outline', href: '/tasks' },
         { title: 'Track expenses', description: 'Plan and review your budget', icon: 'wallet-outline', href: '/budget' },
+        { title: 'Calendar', description: 'Events and deadlines together', icon: 'calendar-number-outline', href: '/calendar' },
+        { title: 'Reminders', description: 'Save important follow-ups', icon: 'notifications-outline', href: '/reminders' },
+        { title: 'Data & recovery', description: 'Backups, archive and Trash', icon: 'cloud-download-outline', href: '/data' },
       ]} />
+      {dueReminders.length > 0 && <View style={{ ...cardStyle, gap: spacing.md, borderColor: colors.primary }}>
+        <Text accessibilityRole="alert" style={styles.sectionTitle}>{dueReminders.length} {dueReminders.length === 1 ? 'reminder due' : 'reminders due'}</Text>
+        {dueReminders.slice(0,3).map((reminder) => <Text key={reminder.id} style={styles.subtitle}>{reminder.title}</Text>)}
+        <AppButton title="Review reminders" href="/reminders" />
+      </View>}
       {loading ? <View style={styles.loading}><ActivityIndicator color={colors.primary} accessibilityLabel="Loading dashboard" /><Text style={styles.subtitle}>Loading your event overview…</Text></View>
         : error || !data ? <EmptyState title="Unable to load your dashboard" description="Your local events could not be read. Please try again." action={<AppButton title="Retry" onPress={retry} />} />
           : <>
             <View style={styles.sectionHeader}><Text accessibilityRole="header" style={styles.sectionTitle}>At a glance</Text><Text style={styles.small}>Your event overview</Text></View>
             <View style={styles.stats}>
               <StatCard label="Total events" value={String(data.total)} caption="All your plans" icon="layers-outline" />
-              <StatCard label="Upcoming events" value={String(data.upcoming)} caption="Still to come" icon="calendar-outline" tone="blue" />
-              <StatCard label="Past events" value={String(data.past)} caption="Start time has passed" icon="checkmark-circle-outline" tone="green" />
+              <StatCard label="Upcoming / ongoing" value={String(data.upcoming)} caption="Active scheduled events" icon="calendar-outline" tone="blue" />
+              <StatCard label="Past events" value={String(data.past)} caption="Completed or ended" icon="checkmark-circle-outline" tone="green" />
             </View>
             {data.unscheduled > 0 && <Text style={styles.unscheduled}>{data.unscheduled} {data.unscheduled === 1 ? 'event needs' : 'events need'} a date. These count toward your total.</Text>}
             {records && <DashboardInsights records={records} now={now} />}
@@ -72,7 +81,7 @@ export default function HomeDashboard() {
             {data.total === 0 ? <EmptyState title="Your story starts here" description="No events yet. Tap Create Event above to plan your first great moment." icon="sparkles-outline" />
               : data.nextEvents.length === 0 ? <EmptyState title="Room for something new" description={data.unscheduled > 0 ? 'No upcoming events are scheduled. Add dates to your events or create a new one.' : 'You have no upcoming events. Create a new event when inspiration strikes.'} icon="calendar-outline" action={<AppButton title="Browse events" href="/events" variant="secondary" />} />
                 : data.nextEvents.map((event) => <DashboardEventCard key={event.id} event={event} readiness={data.readiness.get(event.id) ?? calculateReadiness(0, 0)} />)}
-            <Text style={styles.footnote}>Past events are based on their scheduled start. Events without a time stay upcoming through their scheduled day.</Text>
+            <Text style={styles.footnote}>Events stay active until their scheduled end, or their start if no end is set. Completed events are past; cancelled events are excluded from upcoming. Task readiness measures checklist completion.</Text>
           </>}
     </ScrollView>
   </SafeAreaView>;
