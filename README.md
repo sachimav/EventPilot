@@ -36,24 +36,22 @@ The five main tabs of EventPilot, captured on a mobile screen.
   <tr>
     <th>Home</th>
     <th>Events</th>
+    <th>Tasks</th>
   </tr>
   <tr>
     <td><img src="docs/screenshots/home.jpg" alt="EventPilot Home with Create Event and quick actions" width="240" /></td>
     <td><img src="docs/screenshots/events.jpg" alt="My Events with search, category filters, and a saved event" width="240" /></td>
-  </tr>
-  <tr>
-    <th>Tasks</th>
-    <th>Budget</th>
-  </tr>
-  <tr>
     <td><img src="docs/screenshots/tasks.jpg" alt="Task Manager with event, priority, and status filters and task counts" width="240" /></td>
+  </tr>
+  <tr>
+    <th>Budget</th>
+    <th>Calendar</th>
+    <th></th>
+  </tr>
+  <tr>
     <td><img src="docs/screenshots/budget.jpg" alt="Budget Manager showing the event budget, estimated expenses, and actual expenses in rupees" width="240" /></td>
-  </tr>
-  <tr>
-    <th colspan="2">Calendar</th>
-  </tr>
-  <tr>
-    <td colspan="2" align="center"><img src="docs/screenshots/calendar.jpg" alt="Calendar month grid with scheduled task and event entries" width="240" /></td>
+    <td><img src="docs/screenshots/calendar.jpg" alt="Calendar month grid with scheduled task and event entries" width="240" /></td>
+    <td></td>
   </tr>
 </table>
 
