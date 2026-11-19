@@ -8,6 +8,7 @@ import { sortActivities } from '../utils/activityTimeline';
 import AppButton from './AppButton';
 import EmptyState from './EmptyState';
 import { spacing, colors } from '../constants/theme';
+import { showSuccess, showError } from '../utils/feedback';
 export default function EventReports({ id }) {
     const query = useCallback(async () => {
         if (id === null)
@@ -20,9 +21,11 @@ export default function EventReports({ id }) {
     async function save(name, text, mime) { try {
         await saveTextFile(name, text, mime);
         setMessage('Export ready.');
+        showSuccess('Export ready', 'Your report or calendar is ready to download or share.');
     }
     catch (cause) {
         setMessage(String(cause));
+        showError('Unable to export', 'Please try again.');
     } }
     if (loading)
         return <ActivityIndicator />;

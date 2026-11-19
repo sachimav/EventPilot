@@ -1,6 +1,26 @@
 const { test, expect } = require('@playwright/test');
 const fs = require('node:fs/promises');
 
+test('action feedback survives navigation, dismisses, replaces and expires', async ({ page }) => {
+  await page.goto('/events/create');
+  await fillEvent(page, 'Feedback demo');
+  await page.getByRole('button', { name: 'Save event', exact: true }).click();
+  const feedback = page.getByTestId('action-feedback');
+  await expect(page.getByRole('link', { name: 'Event tasks', exact: true })).toBeVisible();
+  await expect(feedback.getByText('Event successfully created', { exact: true })).toBeVisible();
+  await page.screenshot({ path: '.expo/screenshots/action-success-popup.png' });
+  await feedback.getByRole('button', { name: 'Dismiss notification', exact: true }).click();
+  await expect(feedback).toHaveCount(0);
+  await page.getByRole('link', { name: 'Edit event', exact: true }).click();
+  await page.getByLabel('Title *', { exact: true }).fill('Updated feedback demo');
+  await page.getByRole('button', { name: 'Save event', exact: true }).click();
+  await expect(feedback.getByText('Event updated', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Archive event', exact: true }).click();
+  await expect(feedback.getByText('Event archived', { exact: true })).toBeVisible();
+  await expect(feedback.getByText('Event updated', { exact: true })).toHaveCount(0);
+  await expect(feedback).toHaveCount(0, { timeout: 7000 });
+});
+
 test('event scheduling blocks overlapping creates and edits while allowing adjacent slots', async ({ page }) => {
   await page.goto('/events/create');
   await fillEvent(page, 'Reserved conference');

@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { showSuccess, showError } from '../utils/feedback';
 import { Text, View } from 'react-native';
 import { activities } from '../database';
 import { activityTimeRange, emptyActivity, toActivityInput, validateActivity } from '../utils/activityTimeline';
@@ -42,8 +43,10 @@ export default function ActivityForm({ eventId, initialValues = emptyActivity, e
                 return;
             }
             await onSave(input);
+            showSuccess(editing ? 'Activity updated' : 'Activity added', values.title.trim());
         }
         catch (cause) {
+            showError('Unable to save activity', 'Your entries are safe. Please try again.');
             console.error('Unable to save activity', cause);
             setError('Unable to save this activity. It or its event may have been deleted. Your entries are still here; please try again.');
         }

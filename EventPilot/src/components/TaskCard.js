@@ -6,6 +6,7 @@ import { cardStyle, colors, spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
 import { getTaskStatus } from '../utils/taskDeadlines';
 import TaskStatusBadge from './TaskStatusBadge';
+import { showSuccess, showError } from '../utils/feedback';
 export default function TaskCard({ task, eventName, disabled, onEdit, onChange, now }) {
     const [details, setDetails] = useState(false);
     const [confirm, setConfirm] = useState(false);
@@ -23,8 +24,10 @@ export default function TaskCard({ task, eventName, disabled, onEdit, onChange, 
             if (!changed)
                 throw new Error('Task no longer exists.');
             onChange();
+            showSuccess(remove ? 'Task deleted' : task.completed ? 'Task reopened' : 'Task completed', task.title);
         }
         catch (cause) {
+            showError('Unable to update task', 'Please refresh the list and try again.');
             console.error('Unable to change task', cause);
             setError('Unable to change this task. Please try again or refresh the list.');
         }

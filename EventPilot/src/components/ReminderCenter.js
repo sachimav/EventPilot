@@ -10,6 +10,7 @@ import AppInput from './AppInput';
 import ChoiceChips from './ChoiceChips';
 import EventDateTimeField from './EventDateTimeField';
 import EmptyState from './EmptyState';
+import { showSuccess, showError } from '../utils/feedback';
 async function load() { return { events: await events.list(), reminders: await reminders.list() }; }
 export default function ReminderCenter() {
     const { data, retry, error } = useFocusQuery(load, subscribeDataChanges);
@@ -20,14 +21,17 @@ export default function ReminderCenter() {
     const [time, setTime] = useState('09:00');
     const [message, setMessage] = useState('');
     const [busy, setBusy] = useState(false);
-    async function run(action) { if (busy)
+    async function run(action, successTitle) { if (busy)
         return; setBusy(true); try {
-        await action();
+        const result = await action();
+        if (result === false) throw new Error('Reminder no longer exists.');
         retry();
         setMessage('Saved.');
+        showSuccess(successTitle);
     }
     catch (cause) {
         setMessage(String(cause));
+        showError('Unable to save reminder', 'Please try again.');
     }
     finally {
         setBusy(false);
@@ -48,7 +52,7 @@ export default function ReminderCenter() {
                     setMessage('Enter a title and valid date/time.');
                     return;
                 }
-                run(async () => { await reminders.create({ event_id: Number(selected), title: title.trim(), remind_at: at.toISOString() }); setTitle(''); });
+                run(async () => { await reminders.create({ event_id: Number(selected), title: title.trim(), remind_at: at.toISOString() }); setTitle(''); }, 'Reminder created');
             }}/>
     </>}
     {!!message && <Text accessibilityRole="alert" style={{ color: colors.primary }}>{message}</Text>}
@@ -56,7 +60,7 @@ export default function ReminderCenter() {
     {open.map((reminder) => <View key={reminder.id} style={{ ...cardStyle, gap: spacing.md }}>
       <Text style={{ color: new Date(reminder.remind_at).getTime() <= now ? colors.danger : colors.primary }}>{new Date(reminder.remind_at).getTime() <= now ? 'Due now' : 'Scheduled'} · {new Date(reminder.remind_at).toLocaleString()}</Text>
       <Text>{reminder.title}</Text>
-      <AppButton title="Dismiss reminder" disabled={busy} onPress={() => run(() => reminders.update(reminder.id, { dismissed: 1 }))}/>
+      <AppButton title="Dismiss reminder" disabled={busy} onPress={() => run(() => reminders.update(reminder.id, { dismissed: 1 }), 'Reminder dismissed')}/>
       <AppButton title="Open event" variant="secondary" href={{ pathname: '/events/[id]', params: { id: reminder.event_id } }}/>
     </View>)}
   </View>;

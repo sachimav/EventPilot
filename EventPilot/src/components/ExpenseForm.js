@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { showSuccess, showError } from '../utils/feedback';
 import { Text, View } from 'react-native';
 import { emptyExpense, toExpenseInput, validateExpense } from '../utils/budgetManager';
 import { cardStyle, colors, spacing, typography } from '../constants/theme';
@@ -29,8 +30,10 @@ export default function ExpenseForm({ eventId, eventName, initialValues = emptyE
         setError('');
         try {
             await onSave(toExpenseInput(values, eventId));
+            showSuccess(editing ? 'Expense updated' : 'Expense added', 'Your budget has been refreshed.');
         }
         catch (cause) {
+            showError('Unable to save expense', 'Your entries are safe. Please try again.');
             console.error('Unable to save expense', cause);
             setError('Unable to save this expense. It or its event may have been deleted. Your entries are still here; please try again.');
         }

@@ -15,13 +15,7 @@ Built with React Native, Expo, JavaScript, and SQLite, EventPilot provides a sha
 - [Installation and setup](#installation-and-setup)
 - [Using EventPilot](#using-eventpilot)
 - [Project structure](#project-structure)
-- [Database and offline storage](#database-and-offline-storage)
-- [Testing and verification](#testing-and-verification)
-- [Current limitations](#current-limitations)
-- [Future improvements](#future-improvements)
 - [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Project overview
 
@@ -80,6 +74,7 @@ Organizers also need access to their plans when internet connectivity is limited
 - Pending and urgent task counts, readiness progress, and budget warnings.
 - Due reminders and shortcuts to planning tools.
 - Refresh on returning to screens, with loading, error, and empty states.
+- Animated success/error feedback popups for saved changes, deletions, check-in, recovery, payments, receipts, reminders, and exports. Popups stay visible across navigation, can be dismissed, and close automatically.
 
 ### Event management
 

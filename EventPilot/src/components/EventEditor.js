@@ -7,6 +7,7 @@ import EventForm from './EventForm';
 import EmptyState from './EmptyState';
 import AppButton from './AppButton';
 import { colors } from '../constants/theme';
+import { showSuccess } from '../utils/feedback';
 export default function EventEditor({ id }) {
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -41,6 +42,7 @@ export default function EventEditor({ id }) {
                 setEvent(null);
                 return;
             }
+            showSuccess('Event updated', input.name);
             router.replace({ pathname: '/events/[id]', params: { id: event.id } });
         }}/>;
 }

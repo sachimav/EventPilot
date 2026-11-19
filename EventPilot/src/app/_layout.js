@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Button, Text, View } from 'react-native';
 import { colors } from '../constants/theme';
 import { initializeDatabase } from '../database';
+import FeedbackHost from '../components/FeedbackHost';
 
 export const unstable_settings = { initialRouteName: '(tabs)' };
 
@@ -37,7 +38,7 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <View style={{ flex: 1 }}>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerTintColor: colors.primary, headerStyle: { backgroundColor: colors.background }, headerShadowVisible: false, headerTitleStyle: { color: colors.heading }, contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -55,6 +56,7 @@ export default function RootLayout() {
         <Stack.Screen name="reminders" options={{ title: 'Reminders' }} />
         <Stack.Screen name="data" options={{ title: 'Data & Recovery' }} />
       </Stack>
-    </>
+      <FeedbackHost />
+    </View>
   );
 }

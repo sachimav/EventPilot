@@ -9,6 +9,7 @@ import AppButton from './AppButton';
 import AppInput from './AppInput';
 import ChoiceChips from './ChoiceChips';
 import EmptyState from './EmptyState';
+import { showSuccess, showError } from '../utils/feedback';
 const blank = { name: '', email: '', phone: '', rsvp: 'invited', plus_ones: '0', dietary: '', service: '', contact: '', quote: '0', booking_status: 'inquiry', notes: '' };
 export default function PeopleManager({ eventId, kind }) {
     const guestMode = kind === 'guests';
@@ -22,18 +23,21 @@ export default function PeopleManager({ eventId, kind }) {
     const [removeId, setRemoveId] = useState(null);
     const [filter, setFilter] = useState('all');
     const change = (key, value) => setValues((old) => ({ ...old, [key]: value }));
-    async function run(action) {
+    async function run(action, successTitle) {
         if (busy)
             return;
         setBusy(true);
         setMessage('');
         try {
-            await action();
+            const result = await action();
+            if (result === false) throw new Error('Record no longer exists.');
             retry();
+            if (successTitle) showSuccess(successTitle);
         }
         catch (cause) {
             console.error(cause);
             setMessage(`Unable to save this ${noun}. Please try again.`);
+            showError(`Unable to update ${noun}`, 'Please try again.');
         }
         finally {
             setBusy(false);
@@ -72,7 +76,7 @@ export default function PeopleManager({ eventId, kind }) {
                     throw new Error('Vendor no longer exists.');
             }
             setEditor(null);
-        });
+        }, `${guestMode ? 'Guest' : 'Vendor'} ${editor === 'new' ? 'added' : 'updated'}`);
     }
     function edit(row) {
         setMessage('');
@@ -115,15 +119,15 @@ export default function PeopleManager({ eventId, kind }) {
         {'rsvp' in row ? <>
           <Text>{row.rsvp} · {row.plus_ones} plus-ones · {row.checked_in ? 'Checked in' : 'Not checked in'}</Text>
           {!!row.dietary && <Text>Dietary: {row.dietary}</Text>}
-          <AppButton title={row.checked_in ? 'Undo check-in' : 'Check in guest'} disabled={busy || editor !== null} onPress={() => run(() => guests.update(row.id, { checked_in: row.checked_in ? 0 : 1 }))}/>
+          <AppButton title={row.checked_in ? 'Undo check-in' : 'Check in guest'} disabled={busy || editor !== null} onPress={() => run(() => guests.update(row.id, { checked_in: row.checked_in ? 0 : 1 }), row.checked_in ? 'Guest check-in undone' : 'Guest checked in')}/>
         </> : <Text>{row.service} · {row.booking_status} · {formatLkr(row.quoted_cents)}{row.contact ? ` · ${row.contact}` : ''}{row.notes ? `\n${row.notes}` : ''}</Text>}
         <AppButton title={`Edit ${noun}`} variant="secondary" disabled={busy || editor !== null} onPress={() => edit(row)}/>
         {removeId === row.id ? <>
           <Text accessibilityRole="alert">Permanently delete this {noun}?</Text>
-          <AppButton title="Confirm deletion" variant="danger" disabled={busy} onPress={() => run(async () => { if (guestMode)
-                    await guests.delete(row.id);
-                else
-                    await vendors.delete(row.id); setRemoveId(null); })}/>
+          <AppButton title="Confirm deletion" variant="danger" disabled={busy} onPress={() => run(async () => {
+                    const changed = guestMode ? await guests.delete(row.id) : await vendors.delete(row.id);
+                    if (!changed) throw new Error('Record no longer exists.');
+                    setRemoveId(null); }, `${guestMode ? 'Guest' : 'Vendor'} deleted`)}/>
           <AppButton title="Keep record" variant="secondary" disabled={busy} onPress={() => setRemoveId(null)}/>
         </> : <AppButton title={`Delete ${noun}`} variant="danger" disabled={busy || editor !== null} onPress={() => setRemoveId(row.id)}/>}
       </View>)}

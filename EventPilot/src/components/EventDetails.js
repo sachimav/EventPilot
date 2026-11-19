@@ -12,6 +12,7 @@ import EventReadiness from './EventReadiness';
 import { readinessForEvent } from '../utils/eventReadiness';
 import QuickActions from './QuickActions';
 import { duplicateEvent } from '../database/planning';
+import { showSuccess, showError } from '../utils/feedback';
 export default function EventDetails({ id }) {
     const query = useCallback(async () => {
         if (id === null)
@@ -33,12 +34,14 @@ export default function EventDetails({ id }) {
         setDeleting(true);
         setDeleteError('');
         try {
-            await events.update(id, { deleted_at: new Date().toISOString() });
+            if (!await events.update(id, { deleted_at: new Date().toISOString() })) throw new Error('Event no longer exists.');
+            showSuccess('Event moved to Trash', 'You can restore it from Data & recovery.');
             router.replace('/events');
         }
         catch (cause) {
             console.error('Unable to delete event', cause);
             setDeleteError('Unable to delete this event. Please try again.');
+            showError('Unable to delete event', 'Please try again.');
         }
         finally {
             pending.current = false;
@@ -77,10 +80,12 @@ export default function EventDetails({ id }) {
                 setActionError('');
                 try {
                     const copy = await duplicateEvent(event.id);
+                    showSuccess('Event duplicated', 'Your new draft is ready to edit.');
                     router.push({ pathname: '/events/[id]/edit', params: { id: copy } });
                 }
                 catch (cause) {
                     setActionError(String(cause));
+                    showError('Unable to duplicate event', 'Please try again.');
                 }
                 finally {
                     setActionBusy(false);
@@ -91,11 +96,13 @@ export default function EventDetails({ id }) {
                 setActionBusy(true);
                 setActionError('');
                 try {
-                    await events.update(event.id, { archived_at: new Date().toISOString() });
+                    if (!await events.update(event.id, { archived_at: new Date().toISOString() })) throw new Error('Event no longer exists.');
+                    showSuccess('Event archived', 'You can restore it from Data & recovery.');
                     router.replace('/events');
                 }
                 catch (cause) {
                     setActionError(String(cause));
+                    showError('Unable to archive event', 'Please try again.');
                 }
                 finally {
                     setActionBusy(false);

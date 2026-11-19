@@ -8,6 +8,7 @@ import { emptyEvent, toEventInput, validateEvent } from '../utils/eventForm';
 import { router } from 'expo-router';
 import ChoiceChips from './ChoiceChips';
 import EventConflictModal from './EventConflictModal';
+import { showError } from '../utils/feedback';
 export default function EventForm({ initialValues = emptyEvent, currency = 'LKR', onSave }) {
     const [values, setValues] = useState(initialValues);
     const [errors, setErrors] = useState({});
@@ -44,6 +45,7 @@ export default function EventForm({ initialValues = emptyEvent, currency = 'LKR'
             } else {
                 console.error('Unable to save event', cause);
                 setError('Unable to save this event. Your entries are still here. Please try again.');
+                showError('Unable to save event', 'Your entries are safe. Please try again.');
             }
         }
         finally {

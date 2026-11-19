@@ -4,6 +4,7 @@ import EventForm from '../../components/EventForm';
 import { useState } from 'react';
 import ChoiceChips from '../../components/ChoiceChips';
 import { createPlannedEvent, eventTemplates } from '../../database/planning';
+import { showSuccess } from '../../utils/feedback';
 
 export default function CreateEventScreen() {
   const [template,setTemplate] = useState(/** @type {keyof typeof eventTemplates} */ ('blank'));
@@ -11,6 +12,7 @@ export default function CreateEventScreen() {
     <ChoiceChips label="Start from a template" value={template} choices={Object.entries(eventTemplates).map(([value,item]) => ({ value,label:item.label }))} onChange={(value) => setTemplate(/** @type {keyof typeof eventTemplates} */ (value))} />
     <EventForm onSave={async (input) => {
       const id = await createPlannedEvent(input, template);
+      showSuccess('Event successfully created', input.name);
       router.replace({ pathname: '/events/[id]', params: { id } });
     }} />
   </PlaceholderScreen>;

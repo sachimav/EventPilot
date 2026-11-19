@@ -10,6 +10,7 @@ import { cardStyle, colors, spacing } from '../constants/theme';
 import AppButton from './AppButton';
 import AppInput from './AppInput';
 import EmptyState from './EmptyState';
+import { showSuccess, showError } from '../utils/feedback';
 async function load() {
     const [eventRows, taskRows] = await Promise.all([events.list(), tasks.list()]);
     const activityRows = (await Promise.all(eventRows.map((event) => activities.listByEvent(event.id)))).flat();
@@ -60,9 +61,11 @@ export default function PlanningCalendar() {
             try {
                 await saveTextFile('eventpilot-calendar.ics', calendarExport(data.events, data.activities, data.tasks), 'text/calendar');
                 setMessage('Calendar exported. Import it into your calendar app.');
+                showSuccess('Calendar export ready', 'Import the file into your calendar app.');
             }
             catch (cause) {
                 setMessage(String(cause));
+                showError('Unable to export calendar', 'Please try again.');
             }
         }}/>
     {!!message && <Text accessibilityRole="alert">{message}</Text>}

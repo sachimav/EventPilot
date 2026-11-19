@@ -5,6 +5,7 @@ import { formatLkr } from '../utils/budgetManager';
 import { cardStyle, colors, spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
 import ExpensePayments from './ExpensePayments';
+import { showSuccess, showError } from '../utils/feedback';
 export default function ExpenseCard({ expense, disabled, onEdit, onChange }) {
     const [confirm, setConfirm] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -18,10 +19,12 @@ export default function ExpenseCard({ expense, disabled, onEdit, onChange }) {
         setDeleting(true);
         setError('');
         try {
-            await expenses.delete(expense.id);
+            if (!await expenses.delete(expense.id)) throw new Error('Expense no longer exists.');
+            showSuccess('Expense deleted', expense.title);
             onChange();
         }
         catch (cause) {
+            showError('Unable to delete expense', 'Please refresh the list and try again.');
             console.error('Unable to delete expense', cause);
             setError('Unable to delete this expense. Please try again.');
         }

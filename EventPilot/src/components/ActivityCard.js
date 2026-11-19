@@ -4,6 +4,7 @@ import { activities } from '../database';
 import { activityTimeRange } from '../utils/activityTimeline';
 import { cardStyle, colors, spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
+import { showSuccess, showError } from '../utils/feedback';
 export default function ActivityCard({ activity, disabled, onEdit, onChange }) {
     const [confirm, setConfirm] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -16,10 +17,12 @@ export default function ActivityCard({ activity, disabled, onEdit, onChange }) {
         setDeleting(true);
         setError('');
         try {
-            await activities.delete(activity.id);
+            if (!await activities.delete(activity.id)) throw new Error('Activity no longer exists.');
+            showSuccess('Activity deleted', activity.title);
             onChange();
         }
         catch (cause) {
+            showError('Unable to delete activity', 'Please refresh the list and try again.');
             console.error('Unable to delete activity', cause);
             setError('Unable to delete this activity. Please try again.');
         }

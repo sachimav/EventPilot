@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { showSuccess, showError } from '../utils/feedback';
 import { Text, View } from 'react-native';
 import { emptyTask, priorityChoices, toTaskInput, validateTask } from '../utils/taskManager';
 import { cardStyle, colors, spacing, typography } from '../constants/theme';
@@ -31,8 +32,10 @@ export default function TaskForm({ events, initialValues = emptyTask, editing = 
         setError('');
         try {
             await onSave(toTaskInput(values, events));
+            showSuccess(editing ? 'Task updated' : 'Task created', values.title.trim());
         }
         catch (cause) {
+            showError('Unable to save task', 'Your entries are safe. Please try again.');
             console.error('Unable to save task', cause);
             setError('Unable to save this task. It or its event may have been deleted. Your entries are still here; please try again.');
         }
