@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../constants/theme';
 
 /** @type {Record<string, [import('react').ComponentProps<typeof Ionicons>['name'], import('react').ComponentProps<typeof Ionicons>['name']]>} */
@@ -15,10 +15,9 @@ const icons = {
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   return (
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.background }}>
     <Tabs backBehavior="history" screenOptions={({ route }) => ({
-      headerTintColor: colors.heading,
-      headerStyle: { backgroundColor: colors.background },
-      headerShadowVisible: false,
+      headerShown: false,
       tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, height: 72 + insets.bottom, paddingTop: 8, paddingBottom: 8 + insets.bottom },
       tabBarShowLabel: true,
       tabBarLabelPosition: 'below-icon',
@@ -31,11 +30,12 @@ export default function TabLayout() {
         <Ionicons name={icons[route.name][focused ? 1 : 0]} size={size} color={focused ? colors.primary : colors.text} />
       ),
     })}>
-      <Tabs.Screen name="index" options={{ title: 'Home', headerTitle: 'EventPilot' }} />
+      <Tabs.Screen name="index" options={{ title: 'Home' }} />
       <Tabs.Screen name="events" options={{ title: 'My Events', tabBarLabel: 'Events' }} />
       <Tabs.Screen name="tasks" options={{ title: 'Tasks' }} />
       <Tabs.Screen name="budget" options={{ title: 'Budget' }} />
       <Tabs.Screen name="calendar" options={{ title: 'Calendar' }} />
     </Tabs>
+    </SafeAreaView>
   );
 }
