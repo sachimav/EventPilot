@@ -1,6 +1,7 @@
 import { initializeDatabase } from './database';
 import { notifyDataChanges } from './dataChanges';
 import { notifyTaskChanges } from './taskChanges';
+import { assertEventScheduleAvailable, withScheduledEventWrite } from './eventScheduling';
 export const eventTemplates = {
     blank: { label: 'Blank event', tasks: [], activities: [] },
     wedding: { label: 'Wedding', tasks: ['Confirm venue', 'Book caterer', 'Prepare guest list', 'Confirm photographer', 'Finalize the ceremony schedule'], activities: ['Ceremony', 'Reception'] },
@@ -8,9 +9,9 @@ export const eventTemplates = {
     conference: { label: 'Conference', tasks: ['Confirm venue', 'Invite speakers', 'Open guest registration', 'Arrange audiovisual equipment', 'Finalize session agenda'], activities: ['Registration', 'Opening session', 'Closing remarks'] },
 };
 export async function createPlannedEvent(input, template) {
-    const db = await initializeDatabase();
     let id = 0;
-    await db.withTransactionAsync(async () => {
+    await withScheduledEventWrite(async (db) => {
+        await assertEventScheduleAvailable(db, input);
         const result = await db.runAsync('INSERT INTO Events (name,date,time,location,notes,budget_cents,currency,category,status,end_date,end_time) VALUES (?,?,?,?,?,?,?,?,?,?,?)', [input.name, input.date ?? null, input.time ?? null, input.location ?? '', input.notes ?? '', input.budget_cents ?? 0, input.currency ?? 'LKR', input.category ?? 'Other', input.status ?? 'planning', input.end_date ?? null, input.end_time ?? null]);
         id = result.lastInsertRowId;
         for (const title of eventTemplates[template].tasks)

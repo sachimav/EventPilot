@@ -87,6 +87,7 @@ Organizers also need access to their plans when internet connectivity is limited
 - Title, description, category, date, time, location, and total budget fields.
 - Lifecycle statuses: draft, planning, ready, ongoing, completed, and cancelled.
 - Optional end date/time, date/time inputs, and required-field validation.
+- Event overlap prevention on create/edit, with conflicting event names and times. Events without an end reserve one hour; back-to-back events are allowed.
 - Search by title or location, category and upcoming/past filters, chronological sorting, clear filters, and no-results states.
 - Wedding, birthday, and conference templates with starter tasks and unscheduled activities.
 - Duplicate events as drafts, archive plans, and move events to Trash.

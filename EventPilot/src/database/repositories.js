@@ -1,6 +1,7 @@
 import { initializeDatabase } from './database';
 import { notifyTaskChanges } from './taskChanges';
 import { notifyDataChanges } from './dataChanges';
+import { assertEventScheduleAvailable, withScheduledEventWrite } from './eventScheduling';
 function assertId(id) {
     if (!Number.isSafeInteger(id) || id <= 0)
         throw new TypeError('IDs must be positive safe integers.');
@@ -47,13 +48,22 @@ function repository(table, columns, updateCondition = '') {
             const { keys, values } = bindings(input);
             if (!keys.length)
                 throw new TypeError('Update requires at least one field.');
-            const db = await initializeDatabase();
-            const result = await db.runAsync(`UPDATE ${table} SET ${keys.map((key) => `${key} = ?`).join(', ')}, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?${updateCondition}`, [...values, id]);
-            if (table === 'Tasks' && result.changes > 0)
+            const write = async (db) => {
+                if (table === 'Events' && updateCondition) {
+                    const current = await db.getFirstAsync('SELECT * FROM Events WHERE id = ? AND deleted_at IS NULL', [id]);
+                    if (!current) return false;
+                    await assertEventScheduleAvailable(db, { ...current, ...input }, id);
+                }
+                const result = await db.runAsync(`UPDATE ${table} SET ${keys.map((key) => `${key} = ?`).join(', ')}, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?${updateCondition}`, [...values, id]);
+                return result.changes > 0;
+            };
+            const changed = table === 'Events' && updateCondition
+                ? await withScheduledEventWrite(write) : await write(await initializeDatabase());
+            if (table === 'Tasks' && changed)
                 notifyTaskChanges();
-            if (result.changes > 0 && table !== 'Activities')
+            if (changed && table !== 'Activities')
                 notifyDataChanges();
-            return result.changes > 0;
+            return changed;
         },
         async delete(id) {
             assertId(id);

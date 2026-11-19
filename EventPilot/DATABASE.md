@@ -321,3 +321,23 @@ while the app is open. No background notification service is implemented.
 duration/status, escaped exports, backup remapping/rollback, Trash and cascades.
 Browser tests additionally cover real RSVP/check-in, vendor linking, payments,
 receipt upload, exports, restore, archive recovery, duplication and reminders.
+
+### Event schedule conflicts
+
+Event form creation (including templates) and detail edits check current SQLite
+records before saving. The check and write run in one transaction, with event form
+writes serialized within the app. Overlaps are blocked and a modal popup lists
+conflicting event names and their local date/time ranges. Users can close the popup
+to choose another time without losing form entries. There is no override for event overlaps.
+
+The rule is `newStart < existingEnd && newEnd > existingStart`. Explicit end date/time
+defines the interval; without an end, the event reserves one hour, matching calendar
+exports. Back-to-back events are allowed. Edits exclude their own event ID; cancelled,
+archived, trashed, and unscheduled events do not block a slot. Location does not affect
+the check. Existing records and backup restore data are preserved; this does not add a
+schema migration or retroactively resolve previously saved conflicts.
+
+`test-event-conflicts.cjs` covers interval boundaries, containment, multi-day and
+overnight spans, inactive events, and self exclusion. Planning tests cover blocked
+creates/updates, rollback and concurrent saves. Browser tests verify the conflict
+warning, retained form values, allowed adjacent saves and unchanged rejected edits.

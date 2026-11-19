@@ -14,10 +14,11 @@ let opens = 0;
 function loadModules() {
   const cache = {};
   function load(name) {
+    name = path.resolve(__dirname, '../src/database', name);
     if (cache[name]) return cache[name].exports;
     const module = { exports: {} };
     cache[name] = module;
-    const source = fs.readFileSync(path.join(__dirname, '../src/database', `${name}.js`), 'utf8');
+    const source = fs.readFileSync(`${name}.js`, 'utf8');
     const { outputText } = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } });
     vm.runInNewContext(outputText, {
       exports: module.exports,
@@ -41,7 +42,7 @@ function loadModules() {
             async closeAsync() { connection.close(); },
           };
         } };
-        return load(id.replace('./', ''));
+        return load(path.resolve(path.dirname(name), id));
       },
     });
     return module.exports;

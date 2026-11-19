@@ -1,6 +1,45 @@
 const { test, expect } = require('@playwright/test');
 const fs = require('node:fs/promises');
 
+test('event scheduling blocks overlapping creates and edits while allowing adjacent slots', async ({ page }) => {
+  await page.goto('/events/create');
+  await fillEvent(page, 'Reserved conference');
+  await page.getByLabel('End date (optional)', { exact: true }).fill('2026-12-20');
+  await page.getByLabel('End time (optional)', { exact: true }).fill('20:00');
+  await page.getByRole('button', { name: 'Save event', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Event tasks', exact: true })).toBeVisible();
+  const firstPath = new URL(page.url()).pathname;
+  await page.goto(`${firstPath}/edit`);
+  await page.getByRole('button', { name: 'Save event', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`${firstPath}$`));
+  await page.goto('/events/create');
+  await fillEvent(page, 'Second event');
+  await page.getByLabel('Time *', { exact: true }).fill('19:00');
+  await page.getByRole('button', { name: 'Save event', exact: true }).click();
+  const conflictDialog = page.getByRole('dialog');
+  await expect(conflictDialog).toBeVisible();
+  await expect(conflictDialog.getByText('This time is already scheduled', { exact: true })).toBeVisible();
+  await expect(conflictDialog.getByText('Reserved conference', { exact: true })).toBeVisible();
+  await page.screenshot({ path: '.expo/screenshots/event-conflict-popup.png' });
+  await conflictDialog.getByRole('button', { name: 'Choose another time', exact: true }).click();
+  await expect(conflictDialog).toHaveCount(0);
+  await expect(page.getByLabel('Title *', { exact: true })).toHaveValue('Second event');
+  await page.getByLabel('Time *', { exact: true }).fill('20:00');
+  await page.getByRole('button', { name: 'Save event', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Event tasks', exact: true })).toBeVisible();
+  const secondPath = new URL(page.url()).pathname;
+  await page.goto(`${secondPath}/edit`);
+  await page.getByLabel('Time *', { exact: true }).fill('18:30');
+  await page.getByRole('button', { name: 'Save event', exact: true }).click();
+  await expect(conflictDialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(conflictDialog).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByLabel('Time *', { exact: true })).toHaveValue('20:00');
+  await page.goto('/events');
+  await expect(page.getByRole('link', { name: 'View Second event', exact: true })).toHaveCount(1);
+});
+
 test('regression: multi-day calendar and supported month boundaries', async ({ page }) => {
   await page.goto('/events/create');
   await fillEvent(page, 'Three-day conference');
@@ -163,6 +202,7 @@ test('task actions recover after an event is removed while editing', async ({ pa
   await expect(page.getByRole('heading', { name: 'Arrange transport', exact: true })).toBeVisible();
   await page.goto('/events/create');
   await fillEvent(page, 'Keep event');
+  await page.getByLabel('Time *', { exact: true }).fill('20:00');
   await page.getByRole('button', { name: 'Save event', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Event tasks', exact: true })).toBeVisible();
   await page.goto('/tasks');

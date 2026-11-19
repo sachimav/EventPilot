@@ -99,6 +99,21 @@ const source = (name) => path.resolve(__dirname,'../src',name);
   await assert.rejects(backups.restoreBackup(JSON.stringify(unknown)));
   assert.equal(db.prepare('SELECT COUNT(*) AS n FROM Events').get().n,before);
   await api.events.delete(id);
+  const slot = { name: 'Reserved slot', date: '2030-12-20', time: '10:00', end_date: '2030-12-20', end_time: '12:00' };
+  const reserved = await planning.createPlannedEvent(slot, 'blank');
+  const recordCount = db.prepare('SELECT COUNT(*) AS n FROM Events').get().n;
+  await assert.rejects(planning.createPlannedEvent({ ...slot, name: 'Overlapping template', time: '11:00' }, 'wedding'), error => error.name === 'EventScheduleConflictError' && error.conflicts[0].id === reserved);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM Events').get().n, recordCount);
+  assert.equal(await api.events.updateDetails(reserved, { notes: 'Self edit allowed' }), true);
+  const adjacent = await planning.createPlannedEvent({ ...slot, name: 'Adjacent', time: '12:00', end_time: '13:00' }, 'blank');
+  await assert.rejects(api.events.updateDetails(adjacent, { time: '11:00' }), error => error.name === 'EventScheduleConflictError');
+  assert.equal((await api.events.getById(adjacent)).time, '12:00');
+  const results = await Promise.allSettled([
+    planning.createPlannedEvent({ name: 'Concurrent A', date: '2031-01-01', time: '09:00' }, 'blank'),
+    planning.createPlannedEvent({ name: 'Concurrent B', date: '2031-01-01', time: '09:00' }, 'blank'),
+  ]);
+  assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);
+  assert.equal(results.filter(result => result.status === 'rejected' && result.reason.name === 'EventScheduleConflictError').length, 1);
   assert.equal(await api.guests.getById(guest),null); assert.equal(await api.payments.getById(payment),null);
   assert.equal((await api.reminders.listByEvent(id)).length,0);
   console.log('Planning features passed: migration, guests/RSVP/check-in, vendors/payments/receipts, templates/duplication, archive/trash, duration/status, safe exports, transactional backup restore and relationship remapping.');
