@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
 import { View } from 'react-native';
-import NotificationBell from '../../components/NotificationBell';
+import HeaderActions from '../../components/HeaderActions';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../constants/theme';
 
@@ -18,7 +18,7 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.background }}>
-    <View style={{ alignItems: 'flex-end', paddingHorizontal: 16 }}><NotificationBell /></View>
+    <View style={{ alignItems: 'flex-end', paddingHorizontal: 16 }}><HeaderActions /></View>
     <Tabs backBehavior="history" screenOptions={({ route }) => ({
       headerShown: false,
       tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, height: 72 + insets.bottom, paddingTop: 8, paddingBottom: 8 + insets.bottom },

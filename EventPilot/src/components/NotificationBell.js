@@ -9,6 +9,8 @@ import { useTaskClock } from '../hooks/useTaskClock';
 import { buildNotifications } from '../utils/notifications';
 import { colors, radii, spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
+import { useSettings } from '../hooks/useSettings';
+import { formatSettingsDateTime } from '../utils/settings';
 
 async function loadNotifications() {
   const [eventRows, taskRows, reminderRows] = await Promise.all([events.list(), tasks.list(), reminders.list()]);
@@ -16,11 +18,12 @@ async function loadNotifications() {
 }
 
 export default function NotificationBell() {
+  const { settings } = useSettings();
   const [open, setOpen] = useState(false);
   const { data, loading, error, retry } = useFocusQuery(loadNotifications, subscribeDataChanges);
   const now = useTaskClock();
   const insets = useSafeAreaInsets();
-  const items = buildNotifications(data, now);
+  const items = buildNotifications(data, now, settings);
   function navigate(href) { setOpen(false); router.push(href); }
   return <>
     <Pressable accessibilityRole="button" accessibilityLabel={`Notifications, ${items.length} pending`} accessibilityState={{ expanded: open }} onPress={() => { setOpen(true); retry(); }} style={styles.bell}>
@@ -40,7 +43,7 @@ export default function NotificationBell() {
             {!items.length && !error && <View style={styles.message}><Ionicons name="notifications-off-outline" size={32} color={colors.text} /><Text style={styles.title}>All caught up</Text><Text style={styles.caption}>Task deadlines, events starting soon, and due reminders will appear here.</Text></View>}
             {items.map((item) => <Pressable key={item.key} accessibilityRole="button" onPress={() => navigate({ pathname: item.task ? '/events/[id]/tasks' : '/events/[id]', params: { id: item.eventId } })} style={styles.item}>
               <Ionicons name={item.task ? 'checkbox-outline' : 'calendar-outline'} size={23} color={item.at < now && item.task ? colors.danger : colors.primary} />
-              <View style={{ flex: 1, gap: spacing.xs }}><Text style={[styles.label, item.at < now && item.task && { color: colors.danger }]}>{item.label}</Text><Text style={styles.itemTitle}>{item.title}</Text><Text style={styles.caption}>{item.eventName} · {new Date(item.at).toLocaleString()}</Text></View>
+              <View style={{ flex: 1, gap: spacing.xs }}><Text style={[styles.label, item.at < now && item.task && { color: colors.danger }]}>{item.label}</Text><Text style={styles.itemTitle}>{item.title}</Text><Text style={styles.caption}>{item.eventName} · {formatSettingsDateTime(item.at, settings)}</Text></View>
               <Ionicons name="chevron-forward" size={18} color={colors.text} />
             </Pressable>)}
           </ScrollView>}

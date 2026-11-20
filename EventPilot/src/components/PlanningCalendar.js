@@ -11,12 +11,16 @@ import AppButton from './AppButton';
 import AppInput from './AppInput';
 import EmptyState from './EmptyState';
 import { showSuccess, showError } from '../utils/feedback';
+import { useSettings } from '../hooks/useSettings';
 async function load() {
     const [eventRows, taskRows] = await Promise.all([events.list(), tasks.list()]);
     const activityRows = (await Promise.all(eventRows.map((event) => activities.listByEvent(event.id)))).flat();
     return { events: eventRows, tasks: taskRows, activities: activityRows };
 }
 export default function PlanningCalendar() {
+    const { settings } = useSettings();
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const orderedWeekdays = [...weekdays.slice(settings.weekStart), ...weekdays.slice(0, settings.weekStart)];
     const { data, loading, error, retry } = useFocusQuery(load, subscribeDataChanges);
     const [month, setMonth] = useState(dateString(new Date()).slice(0, 7));
     const [message, setMessage] = useState('');
@@ -36,9 +40,9 @@ export default function PlanningCalendar() {
             }}/></View>)}</View>
     {first && <View style={{ ...cardStyle, gap: spacing.sm }}>
       <Text accessibilityRole="header" style={{ color: colors.heading, fontWeight: '700' }}>{first.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</Text>
-      <View style={{ flexDirection: 'row' }}>{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => <Text key={day} style={{ width: '14.2857%', textAlign: 'center', fontSize: 11 }}>{day}</Text>)}</View>
+      <View style={{ flexDirection: 'row' }}>{orderedWeekdays.map((day) => <Text key={day} style={{ width: '14.2857%', textAlign: 'center', fontSize: 11 }}>{day}</Text>)}</View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-        {Array.from({ length: first.getDay() }, (_, index) => <View key={`blank-${index}`} style={{ width: '14.2857%' }}/>)}
+        {Array.from({ length: (first.getDay() - settings.weekStart + 7) % 7 }, (_, index) => <View key={`blank-${index}`} style={{ width: '14.2857%' }}/>)}
         {Array.from({ length: dayCount }, (_, index) => {
                 const date = `${month}-${String(index + 1).padStart(2, '0')}`;
                 const count = agenda.filter((row) => row.date === date).length;

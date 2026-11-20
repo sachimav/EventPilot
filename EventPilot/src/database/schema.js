@@ -130,4 +130,6 @@ export const migrations = [
   BEGIN SELECT RAISE(ABORT,'Vendor must belong to the same event'); END;
   `,
 ];
+// Preferences are device-specific and intentionally excluded from event backups.
+migrations.push('CREATE TABLE AppPreferences (key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL);');
 export const SCHEMA_VERSION = migrations.length;

@@ -5,11 +5,16 @@ import { ActivityIndicator, Button, Text, View } from 'react-native';
 import { colors } from '../constants/theme';
 import { initializeDatabase } from '../database';
 import FeedbackHost from '../components/FeedbackHost';
-import NotificationBell from '../components/NotificationBell';
+import HeaderActions from '../components/HeaderActions';
+import { SettingsProvider } from '../hooks/useSettings';
 
 export const unstable_settings = { initialRouteName: '(tabs)' };
 
 export default function RootLayout() {
+  return <SettingsProvider><RootContent /></SettingsProvider>;
+}
+
+function RootContent() {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -41,7 +46,7 @@ export default function RootLayout() {
   return (
     <View style={{ flex: 1 }}>
       <StatusBar style="dark" />
-      <Stack screenOptions={{ headerRight: () => <NotificationBell />, headerTintColor: colors.primary, headerStyle: { backgroundColor: colors.background }, headerShadowVisible: false, headerTitleStyle: { color: colors.heading }, contentStyle: { backgroundColor: colors.background } }}>
+      <Stack screenOptions={{ headerRight: () => <HeaderActions />, headerTintColor: colors.primary, headerStyle: { backgroundColor: colors.background }, headerShadowVisible: false, headerTitleStyle: { color: colors.heading }, contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="events/create" options={{ title: 'Create Event' }} />
         <Stack.Screen name="events/[id]/index" options={{ title: 'Event Details' }} />
@@ -56,6 +61,7 @@ export default function RootLayout() {
         <Stack.Screen name="vendors" options={{ title: 'Vendor Management' }} />
         <Stack.Screen name="reminders" options={{ title: 'Reminders' }} />
         <Stack.Screen name="data" options={{ title: 'Data & Recovery' }} />
+        <Stack.Screen name="settings" options={{ title: 'Settings' }} />
       </Stack>
       <FeedbackHost />
     </View>

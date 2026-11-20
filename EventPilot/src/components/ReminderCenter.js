@@ -11,8 +11,11 @@ import ChoiceChips from './ChoiceChips';
 import EventDateTimeField from './EventDateTimeField';
 import EmptyState from './EmptyState';
 import { showSuccess, showError } from '../utils/feedback';
+import { useSettings } from '../hooks/useSettings';
+import { formatSettingsDateTime } from '../utils/settings';
 async function load() { return { events: await events.list(), reminders: await reminders.list() }; }
 export default function ReminderCenter() {
+    const { settings } = useSettings();
     const { data, retry, error } = useFocusQuery(load, subscribeDataChanges);
     const now = useTaskClock();
     const [eventId, setEventId] = useState('');
@@ -58,7 +61,7 @@ export default function ReminderCenter() {
     {!!message && <Text accessibilityRole="alert" style={{ color: colors.primary }}>{message}</Text>}
     {open.length === 0 && <EmptyState title="No pending reminders" description="Your saved reminders will appear here."/>}
     {open.map((reminder) => <View key={reminder.id} style={{ ...cardStyle, gap: spacing.md }}>
-      <Text style={{ color: new Date(reminder.remind_at).getTime() <= now ? colors.danger : colors.primary }}>{new Date(reminder.remind_at).getTime() <= now ? 'Due now' : 'Scheduled'} · {new Date(reminder.remind_at).toLocaleString()}</Text>
+      <Text style={{ color: new Date(reminder.remind_at).getTime() <= now ? colors.danger : colors.primary }}>{new Date(reminder.remind_at).getTime() <= now ? 'Due now' : 'Scheduled'} · {formatSettingsDateTime(reminder.remind_at, settings)}</Text>
       <Text>{reminder.title}</Text>
       <AppButton title="Dismiss reminder" disabled={busy} onPress={() => run(() => reminders.update(reminder.id, { dismissed: 1 }), 'Reminder dismissed')}/>
       <AppButton title="Open event" variant="secondary" href={{ pathname: '/events/[id]', params: { id: reminder.event_id } }}/>

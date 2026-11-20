@@ -19,7 +19,8 @@ export function parseBackup(text) {
     if (text.length > 10 * 1024 * 1024)
         throw new Error('Backup exceeds the 10 MB import limit.');
     const backup = JSON.parse(text);
-    if (!backup || backup.format !== 'eventpilot-backup' || backup.schemaVersion !== SCHEMA_VERSION || !backup.tables)
+    // The latest migration adds only device preferences; event backups remain compatible.
+    if (!backup || backup.format !== 'eventpilot-backup' || ![SCHEMA_VERSION, SCHEMA_VERSION - 1].includes(backup.schemaVersion) || !backup.tables)
         throw new Error('This is not a compatible EventPilot backup.');
     for (const table of backupTables) {
         const rows = backup.tables[table];
