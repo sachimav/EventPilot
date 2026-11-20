@@ -5,6 +5,7 @@ import { ActivityIndicator, Button, Text, View } from 'react-native';
 import { colors } from '../constants/theme';
 import { initializeDatabase } from '../database';
 import FeedbackHost from '../components/FeedbackHost';
+import NotificationBell from '../components/NotificationBell';
 
 export const unstable_settings = { initialRouteName: '(tabs)' };
 
@@ -40,7 +41,7 @@ export default function RootLayout() {
   return (
     <View style={{ flex: 1 }}>
       <StatusBar style="dark" />
-      <Stack screenOptions={{ headerTintColor: colors.primary, headerStyle: { backgroundColor: colors.background }, headerShadowVisible: false, headerTitleStyle: { color: colors.heading }, contentStyle: { backgroundColor: colors.background } }}>
+      <Stack screenOptions={{ headerRight: () => <NotificationBell />, headerTintColor: colors.primary, headerStyle: { backgroundColor: colors.background }, headerShadowVisible: false, headerTitleStyle: { color: colors.heading }, contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="events/create" options={{ title: 'Create Event' }} />
         <Stack.Screen name="events/[id]/index" options={{ title: 'Event Details' }} />
