@@ -6,7 +6,7 @@ import { radii, spacing, typography } from '../constants/theme';
 import { eventIntervalLabel } from '../utils/eventConflicts';
 import AppButton from './AppButton';
 
-export default function EventConflictModal({ conflicts, onClose }) {
+export default function EventConflictModal({ conflicts, onClose, restoring = false }) {
   const theme = useTheme();
   const { colors } = theme;
   const styles = useThemedStyles(createStyles);
@@ -20,15 +20,15 @@ export default function EventConflictModal({ conflicts, onClose }) {
           </Pressable>
         </View>
         <Text accessibilityRole="header" style={styles.title}>This time is already scheduled</Text>
-        <Text style={styles.description}>You already have {conflicts.length === 1 ? 'an event' : 'events'} planned during this time. Choose another date or time to continue.</Text>
+        <Text style={styles.description}>{restoring ? 'Another active event reserves this time. Reschedule or archive the conflicting event before restoring this plan.' : `You already have ${conflicts.length === 1 ? 'an event' : 'events'} planned during this time. Choose another date or time to continue.`}</Text>
         <ScrollView style={styles.list} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator keyboardShouldPersistTaps="handled">
           {conflicts.map((event) => <View key={event.id} style={styles.event}>
             <Text style={styles.eventName}>{event.name}</Text>
             <View style={styles.timeRow}><Ionicons name="time-outline" size={17} color={colors.primary} /><Text style={styles.time}>{eventIntervalLabel(event)}</Text></View>
           </View>)}
         </ScrollView>
-        <Text style={styles.note}>Your entries are safe. This event hasn’t been saved.</Text>
-        <AppButton title="Choose another time" icon="create-outline" onPress={onClose} />
+        <Text style={styles.note}>{restoring ? 'Your saved plan is safe and remains in Archive & Trash.' : 'Your entries are safe. This event hasn’t been saved.'}</Text>
+        <AppButton title={restoring ? 'Back to recovery' : 'Choose another time'} icon="create-outline" onPress={onClose} />
       </View>
     </SafeAreaView>
   </Modal>;

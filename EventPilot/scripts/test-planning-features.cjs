@@ -108,6 +108,23 @@ const source = (name) => path.resolve(__dirname,'../src',name);
   const adjacent = await planning.createPlannedEvent({ ...slot, name: 'Adjacent', time: '12:00', end_time: '13:00' }, 'blank');
   await assert.rejects(api.events.updateDetails(adjacent, { time: '11:00' }), error => error.name === 'EventScheduleConflictError');
   assert.equal((await api.events.getById(adjacent)).time, '12:00');
+  for (const field of ['archived_at', 'deleted_at']) {
+    const day = field === 'archived_at' ? '2032-01-01' : '2032-01-02';
+    const plan = { name: 'Recoverable plan', date: day, time: '10:00' };
+    const inactive = await planning.createPlannedEvent(plan, 'blank');
+    await api.events.update(inactive, { [field]: '2030-01-01T00:00:00Z' });
+    const replacement = await planning.createPlannedEvent({ ...plan, name: 'Replacement' }, 'blank');
+    await assert.rejects(api.events.update(inactive, { archived_at: null, deleted_at: null }), error => error.name === 'EventScheduleConflictError');
+    assert.ok((await api.events.getById(inactive))[field], 'Failed restoration preserves inactive state');
+    await api.events.update(replacement, { archived_at: '2030-01-01T00:00:00Z' });
+    const recoveries = await Promise.allSettled([
+      api.events.update(inactive, { archived_at: null, deleted_at: null }),
+      api.events.update(replacement, { archived_at: null }),
+    ]);
+    assert.equal(recoveries.filter(result => result.status === 'fulfilled').length, 1);
+    assert.equal(recoveries.filter(result => result.status === 'rejected').length, 1);
+    assert.equal((await api.events.getById(inactive))[field], null);
+  }
   const results = await Promise.allSettled([
     planning.createPlannedEvent({ name: 'Concurrent A', date: '2031-01-01', time: '09:00' }, 'blank'),
     planning.createPlannedEvent({ name: 'Concurrent B', date: '2031-01-01', time: '09:00' }, 'blank'),

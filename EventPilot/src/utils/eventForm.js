@@ -13,6 +13,11 @@ export function validDate(value) {
     const date = new Date(`${value}T12:00:00`);
     return !Number.isNaN(date.getTime()) && dateString(date) === value;
 }
+export function validLocalDateTime(date, time) {
+    if (!validDate(date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return false;
+    const value = new Date(`${date}T${time}:00`);
+    return Number.isFinite(value.getTime()) && dateString(value) === date && timeString(value) === time;
+}
 export function budgetCents(value) {
     const text = value.trim();
     if (!/^\d+(\.\d{1,2})?$/.test(text))
@@ -31,6 +36,8 @@ export function validateEvent(values) {
         errors.date = 'Choose a valid date.';
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(values.time))
         errors.time = 'Choose a valid time.';
+    else if (!errors.date && !validLocalDateTime(values.date, values.time))
+        errors.time = 'This local time is unavailable. Choose another time.';
     if (!values.location.trim())
         errors.location = 'Enter a location.';
     if (budgetCents(values.budget) === null)
@@ -42,6 +49,8 @@ export function validateEvent(values) {
             errors.endDate = 'Choose a valid end date.';
         if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(values.endTime ?? ''))
             errors.endTime = 'Choose a valid end time.';
+        else if (!errors.endDate && !validLocalDateTime(values.endDate, values.endTime))
+            errors.endTime = 'This local time is unavailable. Choose another time.';
         if (!errors.endDate && !errors.endTime && `${values.endDate}T${values.endTime}` <= `${values.date}T${values.time}`)
             errors.endTime = 'Event end must be after its start.';
     }
