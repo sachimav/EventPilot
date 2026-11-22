@@ -1,14 +1,17 @@
+import { useTheme } from '../hooks/useTheme';
 import { useRef, useState } from 'react';
 import { showSuccess, showError } from '../utils/feedback';
 import { Text, View } from 'react-native';
 import { activities } from '../database';
 import { activityTimeRange, emptyActivity, toActivityInput, validateActivity } from '../utils/activityTimeline';
 import { findActivityConflicts, sameActivityConflicts } from '../utils/activityConflicts';
-import { cardStyle, colors, spacing, typography } from '../constants/theme';
+import { spacing, typography } from '../constants/theme';
 import AppInput from './AppInput';
 import AppButton from './AppButton';
 import EventDateTimeField from './EventDateTimeField';
 export default function ActivityForm({ eventId, initialValues = emptyActivity, editing = false, editingId, onSave, onCancel }) {
+  const theme = useTheme();
+  const { colors, cardStyle } = theme;
     const [values, setValues] = useState(initialValues);
     const [errors, setErrors] = useState({});
     const [error, setError] = useState('');
@@ -63,7 +66,7 @@ export default function ActivityForm({ eventId, initialValues = emptyActivity, e
     <EventDateTimeField mode="time" label="Start time" value={values.startTime} onChange={(value) => change('startTime', value)} error={errors.startTime} disabled={saving}/>
     <EventDateTimeField mode="time" label="End time" value={values.endTime} onChange={(value) => change('endTime', value)} error={errors.endTime} disabled={saving}/>
     <AppInput label="Description (optional)" multiline value={values.description} onChangeText={(value) => change('description', value)} editable={!saving}/>
-    {conflicts !== null && <View style={{ padding: spacing.lg, gap: spacing.md, borderWidth: 1, borderColor: colors.danger, borderRadius: 12, backgroundColor: '#FFF5F6' }}>
+    {conflicts !== null && <View style={{ padding: spacing.lg, gap: spacing.md, borderWidth: 1, borderColor: colors.danger, borderRadius: 12, backgroundColor: colors.dangerSoft }}>
       <Text accessibilityRole="alert" style={{ ...typography.heading, color: colors.danger }}>Schedule conflict</Text>
       <Text style={{ color: colors.heading }}>This activity overlaps with the following activities. It has not been saved.</Text>
       {conflicts.map((activity) => <View key={activity.id} style={{ gap: spacing.xs }}>

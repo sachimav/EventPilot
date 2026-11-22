@@ -1,6 +1,7 @@
+import { useThemedStyles } from '../hooks/useTheme';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, spacing } from '../constants/theme';
+import { spacing } from '../constants/theme';
 import AppButton from './AppButton';
 import ScreenHeader from './ScreenHeader';
 
@@ -11,6 +12,7 @@ export function NavigationButton({ href, children }) {
 
 /** @param {{ title: string, description: string, children?: import('react').ReactNode }} props */
 export default function PlaceholderScreen({ title, description, children }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <SafeAreaView style={styles.screen} edges={['left', 'right', 'bottom']}>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
@@ -21,7 +23,7 @@ export default function PlaceholderScreen({ title, description, children }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = ({ colors }) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.xl, gap: spacing.xl, width: '100%', maxWidth: 720, alignSelf: 'center' },
   children: { gap: spacing.lg },

@@ -1,10 +1,14 @@
+import { useTheme, useThemedStyles } from '../hooks/useTheme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { cardStyle, colors, radii, spacing, typography } from '../constants/theme';
+import { radii, spacing, typography } from '../constants/theme';
 
 /** @param {{ title: string, date: string, location: string, status?: string, href?: import('expo-router').Href }} props */
 export default function EventCard({ title, date, location, status = 'Sample event', href }) {
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useThemedStyles(createStyles);
   const content = <>
     <View style={styles.top}><View style={styles.icon}><Ionicons name="calendar-outline" size={24} color={colors.primary} /></View><Text style={styles.badge}>{status}</Text></View>
     <Text style={styles.title}>{title}</Text>
@@ -14,7 +18,7 @@ export default function EventCard({ title, date, location, status = 'Sample even
   </>;
   return href ? <Link href={href} style={styles.card} asChild><Pressable accessibilityRole="button" accessibilityLabel={`View ${title}`}>{content}</Pressable></Link> : <View style={styles.card}>{content}</View>;
 }
-const styles = StyleSheet.create({
+const createStyles = ({ colors, cardStyle }) => StyleSheet.create({
   card: { ...cardStyle, gap: spacing.md },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing.sm },
   icon: { padding: spacing.md, borderRadius: radii.md, backgroundColor: colors.primarySoft },

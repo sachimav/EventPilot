@@ -1,9 +1,13 @@
+import { useTheme, useThemedStyles } from '../hooks/useTheme';
 import { useId } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors, radii, spacing, touchTarget, typography } from '../constants/theme';
+import { radii, spacing, touchTarget, typography } from '../constants/theme';
 
 /** @param {import('react-native').TextInputProps & { label: string, hint?: string, error?: string }} props */
 export default function AppInput({ label, hint, error, style, ...props }) {
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useThemedStyles(createStyles);
   const id = useId();
   return (
     <View style={styles.field}>
@@ -15,7 +19,7 @@ export default function AppInput({ label, hint, error, style, ...props }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = ({ colors }) => StyleSheet.create({
   field: { gap: spacing.sm },
   label: { ...typography.label, color: colors.heading },
   input: { ...typography.body, color: colors.heading, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radii.md, minHeight: touchTarget, padding: spacing.lg },

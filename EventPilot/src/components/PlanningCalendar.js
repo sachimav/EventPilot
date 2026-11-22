@@ -1,3 +1,4 @@
+import { useTheme } from '../hooks/useTheme';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { activities, events, tasks, subscribeDataChanges } from '../database';
@@ -6,7 +7,7 @@ import { dateString } from '../utils/eventForm';
 import { validCalendarMonth, shiftCalendarMonth } from '../utils/calendar';
 import { calendarAgenda, calendarExport } from '../utils/eventExports';
 import { saveTextFile } from '../utils/files';
-import { cardStyle, colors, spacing } from '../constants/theme';
+import { spacing } from '../constants/theme';
 import AppButton from './AppButton';
 import AppInput from './AppInput';
 import EmptyState from './EmptyState';
@@ -18,6 +19,8 @@ async function load() {
     return { events: eventRows, tasks: taskRows, activities: activityRows };
 }
 export default function PlanningCalendar() {
+  const theme = useTheme();
+  const { colors, cardStyle } = theme;
     const { settings } = useSettings();
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const orderedWeekdays = [...weekdays.slice(settings.weekStart), ...weekdays.slice(0, settings.weekStart)];
@@ -40,7 +43,7 @@ export default function PlanningCalendar() {
             }}/></View>)}</View>
     {first && <View style={{ ...cardStyle, gap: spacing.sm }}>
       <Text accessibilityRole="header" style={{ color: colors.heading, fontWeight: '700' }}>{first.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</Text>
-      <View style={{ flexDirection: 'row' }}>{orderedWeekdays.map((day) => <Text key={day} style={{ width: '14.2857%', textAlign: 'center', fontSize: 11 }}>{day}</Text>)}</View>
+      <View style={{ flexDirection: 'row' }}>{orderedWeekdays.map((day) => <Text key={day} style={{ color: colors.heading, width: '14.2857%', textAlign: 'center', fontSize: 11 }}>{day}</Text>)}</View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
         {Array.from({ length: (first.getDay() - settings.weekStart + 7) % 7 }, (_, index) => <View key={`blank-${index}`} style={{ width: '14.2857%' }}/>)}
         {Array.from({ length: dayCount }, (_, index) => {
@@ -56,7 +59,7 @@ export default function PlanningCalendar() {
     </View>}
     {loading ? <ActivityIndicator /> : error ? <AppButton title="Retry calendar" onPress={retry}/> : visibleAgenda.length === 0 ? <EmptyState title="A clear calendar" description="No events, pending task deadlines, or activities in this period."/>
             : validMonth && visibleAgenda.map((row) => <View key={row.key} style={{ ...cardStyle, gap: spacing.sm }}>
-        <Text style={{ color: colors.primary }}>{row.date} · {row.time} · {row.type}</Text><Text>{row.title}</Text>
+        <Text style={{ color: colors.primary }}>{row.date} · {row.time} · {row.type}</Text><Text style={{ color: colors.heading }}>{row.title}</Text>
         <AppButton title="Open event" variant="secondary" href={{ pathname: '/events/[id]', params: { id: row.eventId } }}/>
       </View>)}
     <AppButton title="Export all to calendar" disabled={!data} onPress={async () => {
@@ -72,6 +75,6 @@ export default function PlanningCalendar() {
                 showError('Unable to export calendar', 'Please try again.');
             }
         }}/>
-    {!!message && <Text accessibilityRole="alert">{message}</Text>}
+    {!!message && <Text style={{ color: colors.heading }} accessibilityRole="alert">{message}</Text>}
   </View>;
 }

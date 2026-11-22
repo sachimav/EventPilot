@@ -1,10 +1,12 @@
 export const defaultSettings = {
+  theme: 'light',
   taskAlerts: true, eventAlerts: true, reminderAlerts: true, overdueAlerts: true,
   taskLeadHours: 48, eventLeadHours: 24, weekStart: 0, timeFormat: 'system',
 };
 
 export function normalizeSettings(value) {
   const result = { ...defaultSettings };
+  if (['light', 'dark'].includes(value?.theme)) result.theme = value.theme;
   for (const key of ['taskAlerts', 'eventAlerts', 'reminderAlerts', 'overdueAlerts']) {
     if (typeof value?.[key] === 'boolean') result[key] = value[key];
   }

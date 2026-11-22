@@ -1,9 +1,13 @@
+import { useTheme, useThemedStyles } from '../hooks/useTheme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { cardStyle, colors, radii, spacing, typography } from '../constants/theme';
+import { radii, spacing, typography } from '../constants/theme';
 import EventReadiness from './EventReadiness';
 export default function DashboardEventCard({ event, readiness }) {
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useThemedStyles(createStyles);
     const date = new Date(`${event.date}T12:00:00`);
     const month = date.toLocaleDateString(undefined, { month: 'short' });
     const fullDate = date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
@@ -29,7 +33,7 @@ export default function DashboardEventCard({ event, readiness }) {
     </Pressable>
   </Link>;
 }
-const styles = StyleSheet.create({
+const createStyles = ({ colors, cardStyle }) => StyleSheet.create({
     card: { ...cardStyle, padding: spacing.lg, gap: spacing.lg },
     main: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
     dateTile: { minWidth: 64, padding: spacing.sm, borderRadius: radii.md, backgroundColor: colors.primarySoft, alignItems: 'center' },

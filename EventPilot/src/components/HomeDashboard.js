@@ -1,3 +1,4 @@
+import { useTheme, useThemedStyles } from '../hooks/useTheme';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
@@ -6,7 +7,7 @@ import { useMemo } from 'react';
 import { events, tasks, expenses, reminders, subscribeDataChanges } from '../database';
 import { useFocusQuery } from '../hooks/useFocusQuery';
 import { summarizeEvents } from '../utils/dashboard';
-import { cardStyle, colors, radii, spacing, typography } from '../constants/theme';
+import { radii, spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
 import EmptyState from './EmptyState';
 import StatCard from './StatCard';
@@ -20,6 +21,9 @@ async function loadDashboard() {
     return { events: eventRows, tasks: taskRows, expenses: expenseRows, reminders: reminderRows };
 }
 export default function HomeDashboard() {
+  const theme = useTheme();
+  const { colors, cardStyle } = theme;
+  const styles = useThemedStyles(createStyles);
     const { data: records, loading, error, retry } = useFocusQuery(loadDashboard, subscribeDataChanges);
     const now = useTaskClock();
     const dueReminders = records?.reminders.filter((reminder) => !reminder.dismissed && new Date(reminder.remind_at).getTime() <= now) ?? [];
@@ -38,7 +42,7 @@ export default function HomeDashboard() {
             <Text accessibilityRole="header" style={styles.heroTitle}>Make it happen.</Text>
             <Text style={styles.heroText}>Bring your next idea to life, one event at a time.</Text>
           </View>
-          <View style={styles.heroIcon}><Ionicons name="calendar-outline" color={colors.surface} size={32}/></View>
+          <View style={styles.heroIcon}><Ionicons name="calendar-outline" color={colors.primary} size={32}/></View>
         </View>
         <Link href="/events/create" style={styles.create} asChild>
           <Pressable accessibilityRole="button">
@@ -84,7 +88,7 @@ export default function HomeDashboard() {
     </ScrollView>
   </SafeAreaView>;
 }
-const styles = StyleSheet.create({
+const createStyles = ({ colors }) => StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.background },
     content: { padding: spacing.xl, gap: spacing.lg, width: '100%', maxWidth: 760, alignSelf: 'center', paddingBottom: spacing.xxl },
     heading: { gap: spacing.sm, marginBottom: spacing.sm },
@@ -94,9 +98,9 @@ const styles = StyleSheet.create({
     hero: { padding: spacing.xl, borderRadius: radii.lg, backgroundColor: colors.primary, gap: spacing.xl },
     heroTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
     heroCopy: { flex: 1, gap: spacing.sm },
-    heroTitle: { ...typography.title, color: colors.surface },
-    heroText: { ...typography.body, color: '#F0E9FF' },
-    heroIcon: { backgroundColor: '#8355E7', padding: spacing.md, borderRadius: radii.md },
+    heroTitle: { ...typography.title, color: colors.onPrimary },
+    heroText: { ...typography.body, color: colors.onPrimary },
+    heroIcon: { backgroundColor: colors.primarySoft, padding: spacing.md, borderRadius: radii.md },
     create: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, backgroundColor: colors.surface, borderRadius: radii.md, minHeight: 52, padding: spacing.md },
     createLabel: { ...typography.body, color: colors.primary, fontWeight: '700' },
     pressed: { opacity: 0.8 },

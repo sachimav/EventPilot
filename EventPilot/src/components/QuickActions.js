@@ -1,8 +1,12 @@
+import { useTheme, useThemedStyles } from '../hooks/useTheme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing, typography } from '../constants/theme';
+import { radii, spacing, typography } from '../constants/theme';
 export default function QuickActions({ actions, title = 'Quick actions' }) {
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useThemedStyles(createStyles);
     return <View style={styles.section}>
     <Text accessibilityRole="header" style={styles.heading}>{title}</Text>
     <View style={styles.grid}>{actions.map((action) => <Link key={action.title} href={action.href} style={styles.card} asChild>
@@ -14,7 +18,7 @@ export default function QuickActions({ actions, title = 'Quick actions' }) {
     </Link>)}</View>
   </View>;
 }
-const styles = StyleSheet.create({
+const createStyles = ({ colors }) => StyleSheet.create({
     section: { gap: spacing.md }, heading: { ...typography.heading, color: colors.heading },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
     card: { flexGrow: 1, flexBasis: 140, minHeight: 144, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: spacing.lg, gap: spacing.sm },

@@ -1,6 +1,10 @@
+import { useTheme, useThemedStyles } from '../hooks/useTheme';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing, typography } from '../constants/theme';
+import { radii, spacing, typography } from '../constants/theme';
 export default function EventReadiness({ readiness }) {
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useThemedStyles(createStyles);
     const { percentage, completedTasks, totalTasks } = readiness;
     const assessed = percentage !== null;
     // Keep 100% reserved for truly complete task lists, even when almost complete.
@@ -12,12 +16,12 @@ export default function EventReadiness({ readiness }) {
     </View>
     <View accessibilityRole="progressbar" accessibilityLabel="Event Readiness" accessibilityValue={assessed ? { min: 0, max: 100, now: percentage, text: `${label}; ${completedTasks} of ${totalTasks} tasks completed` }
             : { text: 'Not Assessed: no tasks yet' }} style={styles.track}>
-      <View style={[styles.fill, { width: `${percentage ?? 0}%`, backgroundColor: percentage === 100 ? '#16705A' : colors.primary }]}/>
+      <View style={[styles.fill, { width: `${percentage ?? 0}%`, backgroundColor: percentage === 100 ? colors.success : colors.primary }]}/>
     </View>
     <Text style={styles.caption}>{assessed ? `${completedTasks} of ${totalTasks} tasks completed` : 'Add tasks to assess this event’s readiness.'}</Text>
   </View>;
 }
-const styles = StyleSheet.create({
+const createStyles = ({ colors }) => StyleSheet.create({
     content: { gap: spacing.sm },
     row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: spacing.sm },
     label: { ...typography.label, color: colors.heading }, value: { ...typography.label, color: colors.primary },

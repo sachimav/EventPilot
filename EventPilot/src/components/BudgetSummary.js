@@ -1,19 +1,25 @@
+import { useTheme, useThemedStyles } from '../hooks/useTheme';
 import { StyleSheet, Text, View } from 'react-native';
 import { formatLkr } from '../utils/budgetManager';
-import { cardStyle, colors, radii, spacing, typography } from '../constants/theme';
+import { radii, spacing, typography } from '../constants/theme';
 function Metric({ label, value, danger = false }) {
+  const styles = useThemedStyles(createStyles);
     return <View style={[styles.metric, danger && styles.dangerCard]}>
     <Text style={styles.label}>{label}</Text>
     <Text style={[styles.amount, danger && styles.dangerText]}>{value}</Text>
   </View>;
 }
 function ComparisonBar({ label, amount, percent, color }) {
+  const styles = useThemedStyles(createStyles);
     return <View style={styles.barGroup}>
     <View style={styles.row}><Text style={styles.caption}>{label}</Text><Text style={styles.caption}>{formatLkr(amount)}</Text></View>
     <View style={styles.track}><View style={[styles.fill, { width: `${percent}%`, backgroundColor: color }]}/></View>
   </View>;
 }
 export default function BudgetSummary({ summary }) {
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useThemedStyles(createStyles);
     const utilization = summary.utilizationPercent === null ? 'Not available' : `${summary.utilizationPercent.toFixed(2)}%`;
     return <View style={styles.content}>
     <View style={styles.metrics}>
@@ -41,7 +47,7 @@ export default function BudgetSummary({ summary }) {
       {summary.categories.map((category) => <View key={category.category.toLowerCase()} style={styles.card}>
         <View style={styles.row}><Text style={styles.heading}>{category.category}</Text><Text style={styles.caption}>{category.count} {category.count === 1 ? 'expense' : 'expenses'}</Text></View>
         <ComparisonBar label="Estimated" amount={category.estimated} percent={category.estimatedPercent} color={colors.primary}/>
-        <ComparisonBar label="Actual" amount={category.actual} percent={category.actualPercent} color={category.overEstimate ? colors.danger : '#16705A'}/>
+        <ComparisonBar label="Actual" amount={category.actual} percent={category.actualPercent} color={category.overEstimate ? colors.danger : colors.success}/>
         <Text style={[styles.caption, category.overEstimate && styles.dangerText]}>
           {category.variance === BigInt(0) ? 'On estimate' : category.overEstimate ? `${formatLkr(category.variance)} over estimate` : `${formatLkr(-category.variance)} under estimate`}
         </Text>
@@ -49,11 +55,11 @@ export default function BudgetSummary({ summary }) {
     </>}
   </View>;
 }
-const styles = StyleSheet.create({
+const createStyles = ({ colors, cardStyle }) => StyleSheet.create({
     content: { gap: spacing.lg },
     metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
     metric: { ...cardStyle, flexGrow: 1, flexBasis: 230, minWidth: 0, gap: spacing.sm, padding: spacing.lg },
-    dangerCard: { borderColor: '#F1B8C2', backgroundColor: '#FFF5F6' },
+    dangerCard: { borderColor: colors.dangerBorder, backgroundColor: colors.dangerSoft },
     label: { ...typography.label, color: colors.text },
     amount: { ...typography.title, color: colors.heading, flexShrink: 1 },
     card: { ...cardStyle, gap: spacing.md },

@@ -239,7 +239,15 @@ test('task actions recover after an event is removed while editing', async ({ pa
   await expect(page.getByRole('button', { name: 'Create task', exact: true })).toBeEnabled();
 });
 
-test('planning tools: guests, vendors, payments, exports, backups and recovery', async ({ page }) => {
+for (const mode of ['light', 'dark']) test(`planning tools (${mode}): guests, vendors, payments, exports, backups and recovery`, async ({ page }) => {
+  const textColor = mode === 'dark' ? 'rgb(243, 239, 250)' : 'rgb(33, 26, 53)';
+  if (mode === 'dark') {
+    await page.goto('/settings');
+    await expect(page.getByText('Preferences save automatically on this device.')).toBeVisible();
+    await page.getByRole('button', { name: 'Theme: Light', exact: true }).click();
+    await page.getByRole('button', { name: 'Theme: Dark', exact: true }).click();
+    await expect(page.getByText('Preferences save automatically on this device.')).toBeVisible();
+  }
   await page.goto('/events/create');
   await page.getByRole('button', { name: 'Start from a template: Wedding', exact: true }).click();
   await fillEvent(page, 'Full planning event');
@@ -292,7 +300,9 @@ test('planning tools: guests, vendors, payments, exports, backups and recovery',
   await (await receiptChooser).setFiles({ name: 'receipt.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\nreceipt') });
   await expect(page.getByRole('button', { name: 'Download receipt.pdf', exact: true })).toBeVisible();
 
+  await expect(page.getByText('Payments track deposits', { exact: false })).toHaveCSS('color', textColor);
   await page.goto(`${eventPath}/reports`);
+  await expect(page.getByText('Exports are generated', { exact: false })).toHaveCSS('color', textColor);
   const reportDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download printable event report', exact: true }).click();
   const report = await reportDownload;
@@ -311,6 +321,7 @@ test('planning tools: guests, vendors, payments, exports, backups and recovery',
   expect(JSON.parse(backup).tables.Receipts).toHaveLength(1);
   await page.getByLabel('Backup JSON', { exact: true }).fill(backup);
   await page.getByRole('button', { name: 'Validate and restore', exact: true }).click();
+  await expect(page.getByText('Import this backup? Existing events will be kept.', { exact: true })).toHaveCSS('color', textColor);
   await page.getByRole('button', { name: 'Confirm import', exact: true }).click();
   await expect(page.getByText(/^Imported \d+ records\.$/)).toBeVisible();
   await page.goto('/events');
@@ -329,10 +340,10 @@ test('planning tools: guests, vendors, payments, exports, backups and recovery',
   await page.getByLabel('Reminder title *', { exact: true }).fill('Call the caterer');
   await page.getByLabel('Date *', { exact: true }).fill('2026-11-01');
   await page.getByRole('button', { name: 'Add reminder', exact: true }).click();
-  await expect(page.getByText('Call the caterer', { exact: true })).toBeVisible();
+  await expect(page.getByText('Call the caterer', { exact: true })).toHaveCSS('color', textColor);
   await page.getByRole('button', { name: 'Dismiss reminder', exact: true }).click();
   await expect(page.getByText('No pending reminders', { exact: true })).toBeVisible();
   await page.goto('/calendar');
   await page.getByLabel('Month (YYYY-MM)', { exact: true }).fill('2026-12');
-  await expect(page.getByText('Full planning event', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Full planning event', { exact: true }).first()).toHaveCSS('color', textColor);
 });

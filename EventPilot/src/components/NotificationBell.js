@@ -1,3 +1,4 @@
+import { useTheme, useThemedStyles } from '../hooks/useTheme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -7,7 +8,7 @@ import { events, tasks, reminders, subscribeDataChanges } from '../database';
 import { useFocusQuery } from '../hooks/useFocusQuery';
 import { useTaskClock } from '../hooks/useTaskClock';
 import { buildNotifications } from '../utils/notifications';
-import { colors, radii, spacing, typography } from '../constants/theme';
+import { radii, spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
 import { useSettings } from '../hooks/useSettings';
 import { formatSettingsDateTime } from '../utils/settings';
@@ -18,6 +19,9 @@ async function loadNotifications() {
 }
 
 export default function NotificationBell() {
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useThemedStyles(createStyles);
   const { settings } = useSettings();
   const [open, setOpen] = useState(false);
   const { data, loading, error, retry } = useFocusQuery(loadNotifications, subscribeDataChanges);
@@ -54,10 +58,10 @@ export default function NotificationBell() {
   </>;
 }
 
-const styles = StyleSheet.create({
+const createStyles = ({ colors }) => StyleSheet.create({
   bell: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   badge: { position: 'absolute', top: 1, right: 0, minWidth: 19, height: 19, paddingHorizontal: 4, borderRadius: radii.pill, backgroundColor: colors.danger, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { color: colors.surface, fontSize: 10, fontWeight: '700' },
+  badgeText: { color: colors.onPrimary, fontSize: 10, fontWeight: '700' },
   overlay: { flex: 1, backgroundColor: '#211A3555', paddingHorizontal: spacing.md, alignItems: 'flex-end' },
   panel: { width: '100%', maxWidth: 440, maxHeight: '100%', backgroundColor: colors.surface, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', flexShrink: 1 },
   heading: { flexDirection: 'row', alignItems: 'center', padding: spacing.lg, borderBottomWidth: 1, borderColor: colors.border },

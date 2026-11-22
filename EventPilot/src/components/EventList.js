@@ -1,3 +1,4 @@
+import { useTheme, useThemedStyles } from '../hooks/useTheme';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { events } from '../database';
@@ -7,7 +8,7 @@ import EventCard from './EventCard';
 import EmptyState from './EmptyState';
 import AppButton from './AppButton';
 import AppInput from './AppInput';
-import { colors, radii, spacing, typography } from '../constants/theme';
+import { radii, spacing, typography } from '../constants/theme';
 import { defaultEventFilters, eventCategories, filterEvents } from '../utils/eventFilters';
 const periods = [
     { value: 'all', label: 'All events' }, { value: 'upcoming', label: 'Upcoming' }, { value: 'past', label: 'Past' },
@@ -17,11 +18,15 @@ async function loadEvents() {
     return { rows, now: new Date() };
 }
 function FilterChip({ label, selected, onPress }) {
+  const styles = useThemedStyles(createStyles);
     return <Pressable accessibilityRole="button" accessibilityState={{ selected }} onPress={onPress} style={({ pressed }) => [styles.chip, selected && styles.selectedChip, pressed && styles.pressed]}>
     <Text style={[styles.chipLabel, selected && styles.selectedLabel]}>{label}</Text>
   </Pressable>;
 }
 export default function EventList({ limit }) {
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useThemedStyles(createStyles);
     const { data, loading, error, retry } = useFocusQuery(loadEvents);
     const [filters, setFilters] = useState(defaultEventFilters);
     const categories = useMemo(() => eventCategories(data?.rows ?? []), [data]);
@@ -54,7 +59,7 @@ export default function EventList({ limit }) {
           </>}
   </View>;
 }
-const styles = StyleSheet.create({
+const createStyles = ({ colors }) => StyleSheet.create({
     content: { gap: spacing.lg },
     filters: { gap: spacing.md },
     filterLabel: { ...typography.label, color: colors.heading },
@@ -62,7 +67,7 @@ const styles = StyleSheet.create({
     chip: { minHeight: 48, borderWidth: 1, borderColor: colors.border, borderRadius: radii.pill, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, justifyContent: 'center', backgroundColor: colors.surface },
     selectedChip: { borderColor: colors.primary, backgroundColor: colors.primary },
     chipLabel: { ...typography.label, color: colors.text },
-    selectedLabel: { color: colors.surface },
+    selectedLabel: { color: colors.onPrimary },
     pressed: { opacity: 0.75 },
     summary: { ...typography.caption, color: colors.text },
     hint: { ...typography.caption, color: colors.text },

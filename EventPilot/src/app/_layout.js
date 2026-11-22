@@ -1,12 +1,12 @@
-import { Stack } from 'expo-router';
+import { useTheme } from '../hooks/useTheme';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Button, Text, View } from 'react-native';
-import { colors } from '../constants/theme';
+import { ActivityIndicator, Button, Platform, Text, View } from 'react-native';
 import { initializeDatabase } from '../database';
 import FeedbackHost from '../components/FeedbackHost';
 import HeaderActions from '../components/HeaderActions';
-import { SettingsProvider } from '../hooks/useSettings';
+import { SettingsProvider, useSettings } from '../hooks/useSettings';
 
 export const unstable_settings = { initialRouteName: '(tabs)' };
 
@@ -15,6 +15,23 @@ export default function RootLayout() {
 }
 
 function RootContent() {
+  const theme = useTheme();
+  const { colors, dark } = theme;
+  const navigationTheme = {
+    ...(dark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(dark ? DarkTheme : DefaultTheme).colors,
+      primary: colors.primary, background: colors.background, card: colors.surface,
+      text: colors.heading, border: colors.border, notification: colors.danger,
+    },
+  };
+  const { ready: preferencesReady, error: preferencesError } = useSettings();
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+      document.body.style.backgroundColor = colors.background;
+    }
+  }, [dark, colors.background]);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -31,10 +48,10 @@ function RootContent() {
     return () => { active = false; };
   }, [attempt]);
 
-  if (!ready) {
+  if (!ready || (!preferencesReady && !preferencesError)) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16, backgroundColor: colors.background }}>
-        <StatusBar style="dark" />
+        <StatusBar style={dark ? 'light' : 'dark'} />
         {error ? <>
           <Text accessibilityRole="alert" style={{ color: colors.danger }}>Unable to open your local database. Please try again.</Text>
           <Button title="Retry" onPress={() => { setError(false); setAttempt((value) => value + 1); }} />
@@ -44,8 +61,8 @@ function RootContent() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      <StatusBar style="dark" />
+    <ThemeProvider value={navigationTheme}><View style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar style={dark ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerRight: () => <HeaderActions />, headerTintColor: colors.primary, headerStyle: { backgroundColor: colors.background }, headerShadowVisible: false, headerTitleStyle: { color: colors.heading }, contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="events/create" options={{ title: 'Create Event' }} />
@@ -64,6 +81,6 @@ function RootContent() {
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
       </Stack>
       <FeedbackHost />
-    </View>
+    </View></ThemeProvider>
   );
 }

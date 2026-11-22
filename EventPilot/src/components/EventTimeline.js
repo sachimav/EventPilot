@@ -1,15 +1,19 @@
+import { useTheme, useThemedStyles } from '../hooks/useTheme';
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { events, activities } from '../database';
 import { useFocusQuery } from '../hooks/useFocusQuery';
 import { emptyActivity, fromActivity, groupActivities } from '../utils/activityTimeline';
 import { validDate } from '../utils/eventForm';
-import { colors, spacing, typography } from '../constants/theme';
+import { spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
 import EmptyState from './EmptyState';
 import ActivityCard from './ActivityCard';
 import ActivityForm from './ActivityForm';
 export default function EventTimeline({ id }) {
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useThemedStyles(createStyles);
     const query = useCallback(async () => {
         if (id === null)
             return { event: null, activities: [] };
@@ -61,7 +65,7 @@ export default function EventTimeline({ id }) {
     <AppButton title="View event details" variant="secondary" href={{ pathname: '/events/[id]', params: { id: event.id } }} disabled={editingForm}/>
   </View>;
 }
-const styles = StyleSheet.create({
+const createStyles = ({ colors }) => StyleSheet.create({
     content: { gap: spacing.lg }, title: { ...typography.title, color: colors.heading },
     caption: { ...typography.caption, color: colors.text }, day: { ...typography.heading, color: colors.primary },
     timelineRow: { flexDirection: 'row', gap: spacing.md },

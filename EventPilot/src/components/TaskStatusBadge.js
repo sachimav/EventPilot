@@ -1,15 +1,17 @@
+import { useTheme } from '../hooks/useTheme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Text, View } from 'react-native';
 import { radii, spacing, typography } from '../constants/theme';
 import { taskStatusLabels } from '../utils/taskDeadlines';
-export const taskStatusStyles = {
-    completed: { color: '#16705A', background: '#E6F5EE', icon: 'checkmark-circle-outline' },
-    overdue: { color: '#B4233B', background: '#FDECF0', icon: 'alert-circle-outline' },
-    urgent: { color: '#8A4B08', background: '#FFF1D6', icon: 'alarm-outline' },
-    upcoming: { color: '#245AB5', background: '#EAF1FF', icon: 'calendar-outline' },
-};
+export const getTaskStatusStyles = (colors) => ({
+    completed: { color: colors.success, background: colors.successSoft, icon: 'checkmark-circle-outline' },
+    overdue: { color: colors.danger, background: colors.dangerSoft, icon: 'alert-circle-outline' },
+    urgent: { color: colors.warning, background: colors.warningSoft, icon: 'alarm-outline' },
+    upcoming: { color: colors.info, background: colors.infoSoft, icon: 'calendar-outline' },
+});
 export default function TaskStatusBadge({ status }) {
-    const palette = taskStatusStyles[status];
+    const { colors } = useTheme();
+    const palette = getTaskStatusStyles(colors)[status];
     return <View style={{ flexDirection: 'row', alignSelf: 'flex-start', alignItems: 'center', gap: spacing.xs,
             paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: radii.pill, backgroundColor: palette.background }}>
     <Ionicons name={palette.icon} size={18} color={palette.color}/>

@@ -1,11 +1,14 @@
+import { useTheme } from '../hooks/useTheme';
 import { useRef, useState } from 'react';
 import { showSuccess, showError } from '../utils/feedback';
 import { Text, View } from 'react-native';
 import { emptyExpense, toExpenseInput, validateExpense } from '../utils/budgetManager';
-import { cardStyle, colors, spacing, typography } from '../constants/theme';
+import { spacing, typography } from '../constants/theme';
 import AppInput from './AppInput';
 import AppButton from './AppButton';
 export default function ExpenseForm({ eventId, eventName, initialValues = emptyExpense, editing = false, onSave, onCancel }) {
+  const theme = useTheme();
+  const { colors, cardStyle } = theme;
     const [values, setValues] = useState(initialValues);
     const [errors, setErrors] = useState({});
     const [error, setError] = useState('');

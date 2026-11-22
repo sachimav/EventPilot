@@ -1,10 +1,13 @@
+import { useTheme } from '../hooks/useTheme';
 import { useState } from 'react';
 import { Platform, Text, View } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AppButton from './AppButton';
-import { colors, spacing } from '../constants/theme';
+import { spacing } from '../constants/theme';
 import { dateString, timeString, validDate } from '../utils/eventForm';
 export default function EventDateTimeField({ mode, value, onChange, error, disabled, label: customLabel, required = true }) {
+  const theme = useTheme();
+  const { colors } = theme;
     const [open, setOpen] = useState(false);
     const label = customLabel ?? (mode === 'date' ? 'Date' : 'Time');
     const selected = mode === 'date' && validDate(value) ? new Date(`${value}T12:00:00`) : new Date();
@@ -16,7 +19,7 @@ export default function EventDateTimeField({ mode, value, onChange, error, disab
     <Text style={{ color: colors.heading, fontWeight: '600' }}>{label} {required ? '*' : '(optional)'}</Text>
     <AppButton title={value || `Choose ${label.toLowerCase()}`} variant="secondary" disabled={disabled} onPress={() => setOpen(true)}/>
     {open && !disabled && <>
-      <DateTimePicker mode={mode} value={selected} display={Platform.OS === 'ios' ? 'spinner' : 'default'} is24Hour onValueChange={(_, date) => {
+      <DateTimePicker themeVariant={theme.dark ? 'dark' : 'light'} textColor={colors.heading} mode={mode} value={selected} display={Platform.OS === 'ios' ? 'spinner' : 'default'} is24Hour onValueChange={(_, date) => {
                 onChange(mode === 'date' ? dateString(date) : timeString(date));
                 if (Platform.OS !== 'ios')
                     setOpen(false);

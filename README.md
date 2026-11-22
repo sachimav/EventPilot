@@ -226,6 +226,8 @@ No backend credentials, API keys, or environment variables are required for curr
 
 Bottom navigation contains **Home, Events, Tasks, Budget, and Calendar**. The Events screen retains the heading **My Events**.
 
+Open **Settings → Preferences → Theme** to choose **Light** or **Dark**. The appearance updates immediately across the app and is saved automatically on this device. Existing installations start in Light mode.
+
 ## Project structure
 
 ```text

@@ -1,3 +1,4 @@
+import { useTheme } from '../hooks/useTheme';
 import { useCallback, useState } from 'react';
 import { Platform, Text, View } from 'react-native';
 import { expenses, payments, receipts, vendors } from '../database';
@@ -10,9 +11,11 @@ import AppInput from './AppInput';
 import AppButton from './AppButton';
 import ChoiceChips from './ChoiceChips';
 import EventDateTimeField from './EventDateTimeField';
-import { colors, spacing } from '../constants/theme';
+import { spacing } from '../constants/theme';
 import { showSuccess, showError } from '../utils/feedback';
 export default function ExpensePayments({ expense, onChange }) {
+  const theme = useTheme();
+  const { colors } = theme;
     const query = useCallback(async () => ({ payments: await payments.listByExpense(expense.id), vendors: await vendors.listByEvent(expense.event_id), receipts: await receipts.listByExpense(expense.id) }), [expense.id, expense.event_id]);
     const { data, retry, error } = useFocusQuery(query);
     const [editor, setEditor] = useState(null);
@@ -60,9 +63,9 @@ export default function ExpensePayments({ expense, onChange }) {
         }, editor === 'new' ? 'Payment recorded' : 'Payment updated');
     }
     return <View style={{ gap: spacing.md }}>
-    <Text>{summary.status} · Paid {formatLkr(summary.paid)} · Outstanding {formatLkr(summary.outstanding)}</Text>
+    <Text style={{ color: colors.heading }}>{summary.status} · Paid {formatLkr(summary.paid)} · Outstanding {formatLkr(summary.outstanding)}</Text>
     {summary.overpaid > BigInt(0) && <Text style={{ color: colors.danger }}>Payments exceed the recorded cost by {formatLkr(summary.overpaid)}. Review the expense amount.</Text>}
-    <Text>Payments track deposits and settlements separately. They do not add the expense a second time to budget totals.</Text>
+    <Text style={{ color: colors.heading }}>Payments track deposits and settlements separately. They do not add the expense a second time to budget totals.</Text>
     {error && <AppButton title="Retry payment history" onPress={retry}/>}
     <ChoiceChips label="Linked vendor" value={expense.vendor_id ? String(expense.vendor_id) : ''} disabled={busy} choices={[{ value: '', label: 'No vendor' }, ...(data?.vendors ?? []).map((vendor) => ({ value: String(vendor.id), label: vendor.name }))]} onChange={(value) => run(() => expenses.update(expense.id, { vendor_id: value ? Number(value) : null }), 'Vendor link updated')}/>
     <EventDateTimeField label="Payment deadline" mode="date" required={false} value={expense.payment_due_at?.slice(0, 10) ?? ''} disabled={busy} onChange={(value) => run(() => expenses.update(expense.id, { payment_due_at: value }), 'Payment deadline updated')}/>
@@ -75,7 +78,7 @@ export default function ExpensePayments({ expense, onChange }) {
       <AppButton title="Cancel payment" variant="secondary" disabled={busy} onPress={() => setEditor(null)}/>
     </> : <AppButton title="Record payment" disabled={busy} onPress={() => { setEditor('new'); setAmount(''); setDate(dateString(new Date())); setMethod(''); }}/>}
     {data?.payments.map((payment) => <View key={payment.id} style={{ gap: spacing.sm, borderTopWidth: 1, borderColor: colors.border, paddingTop: spacing.md }}>
-      <Text>{formatLkr(payment.amount_cents)} · {new Date(payment.paid_at).toLocaleDateString()} · {payment.method || 'Payment'}</Text>
+      <Text style={{ color: colors.heading }}>{formatLkr(payment.amount_cents)} · {new Date(payment.paid_at).toLocaleDateString()} · {payment.method || 'Payment'}</Text>
       <AppButton title="Edit payment" variant="secondary" disabled={busy} onPress={() => { setEditor(payment); setAmount(amountInput(payment.amount_cents)); setDate(dateString(new Date(payment.paid_at))); setMethod(payment.method); }}/>
       {remove === payment.id ? <>
         <AppButton title="Confirm payment deletion" variant="danger" disabled={busy} onPress={() => run(async () => { if (!await payments.delete(payment.id)) throw new Error('Payment no longer exists.'); setRemove(null); }, 'Payment deleted')}/>

@@ -1,10 +1,11 @@
+import { useTheme } from '../hooks/useTheme';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { events, reminders, subscribeDataChanges } from '../database';
 import { useFocusQuery } from '../hooks/useFocusQuery';
 import { useTaskClock } from '../hooks/useTaskClock';
 import { dateString, validDate, timeString } from '../utils/eventForm';
-import { cardStyle, colors, spacing } from '../constants/theme';
+import { spacing } from '../constants/theme';
 import AppButton from './AppButton';
 import AppInput from './AppInput';
 import ChoiceChips from './ChoiceChips';
@@ -15,6 +16,8 @@ import { useSettings } from '../hooks/useSettings';
 import { formatSettingsDateTime } from '../utils/settings';
 async function load() { return { events: await events.list(), reminders: await reminders.list() }; }
 export default function ReminderCenter() {
+  const theme = useTheme();
+  const { colors, cardStyle } = theme;
     const { settings } = useSettings();
     const { data, retry, error } = useFocusQuery(load, subscribeDataChanges);
     const now = useTaskClock();
@@ -42,7 +45,7 @@ export default function ReminderCenter() {
     const selected = eventId || String(data?.events[0]?.id ?? '');
     const open = data?.reminders.filter((reminder) => !reminder.dismissed) ?? [];
     return <View style={{ gap: spacing.lg }}>
-    <Text>These reminders appear while EventPilot is open. For reminders outside the browser, export your event calendar and enable calendar notifications.</Text>
+    <Text style={{ color: colors.heading }}>These reminders appear while EventPilot is open. For reminders outside the browser, export your event calendar and enable calendar notifications.</Text>
     {error && <AppButton title="Retry reminders" onPress={retry}/>}
     {!data?.events.length ? <EmptyState title="Start with an event" description="Create an event before adding a reminder." action={<AppButton title="Create an event" href="/events/create"/>}/> : <>
       <ChoiceChips label="Event" choices={data.events.map((event) => ({ value: String(event.id), label: event.name }))} value={selected} onChange={setEventId} disabled={busy}/>
@@ -62,7 +65,7 @@ export default function ReminderCenter() {
     {open.length === 0 && <EmptyState title="No pending reminders" description="Your saved reminders will appear here."/>}
     {open.map((reminder) => <View key={reminder.id} style={{ ...cardStyle, gap: spacing.md }}>
       <Text style={{ color: new Date(reminder.remind_at).getTime() <= now ? colors.danger : colors.primary }}>{new Date(reminder.remind_at).getTime() <= now ? 'Due now' : 'Scheduled'} · {formatSettingsDateTime(reminder.remind_at, settings)}</Text>
-      <Text>{reminder.title}</Text>
+      <Text style={{ color: colors.heading }}>{reminder.title}</Text>
       <AppButton title="Dismiss reminder" disabled={busy} onPress={() => run(() => reminders.update(reminder.id, { dismissed: 1 }), 'Reminder dismissed')}/>
       <AppButton title="Open event" variant="secondary" href={{ pathname: '/events/[id]', params: { id: reminder.event_id } }}/>
     </View>)}

@@ -1,12 +1,15 @@
+import { useTheme } from '../hooks/useTheme';
 import { useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { expenses } from '../database';
 import { formatLkr } from '../utils/budgetManager';
-import { cardStyle, colors, spacing, typography } from '../constants/theme';
+import { spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
 import ExpensePayments from './ExpensePayments';
 import { showSuccess, showError } from '../utils/feedback';
 export default function ExpenseCard({ expense, disabled, onEdit, onChange }) {
+  const theme = useTheme();
+  const { colors, cardStyle } = theme;
     const [confirm, setConfirm] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [error, setError] = useState('');

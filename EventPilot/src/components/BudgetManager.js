@@ -1,9 +1,10 @@
+import { useTheme } from '../hooks/useTheme';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { events, expenses } from '../database';
 import { useFocusQuery } from '../hooks/useFocusQuery';
 import { fromExpense, summarizeBudget } from '../utils/budgetManager';
-import { colors, spacing, typography } from '../constants/theme';
+import { spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
 import ChoiceChips from './ChoiceChips';
 import EmptyState from './EmptyState';
@@ -15,6 +16,8 @@ async function loadBudget() {
     return { events: eventRows, expenses: expenseRows };
 }
 export default function BudgetManager({ initialEventId } = {}) {
+  const theme = useTheme();
+  const { colors } = theme;
     const { data, loading, error, retry } = useFocusQuery(loadBudget);
     const [eventId, setEventId] = useState(initialEventId ? String(initialEventId) : '');
     const [creating, setCreating] = useState(false);

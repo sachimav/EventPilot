@@ -1,5 +1,49 @@
 const { test, expect } = require('@playwright/test');
 
+test('dark theme updates screens and forms immediately and persists after reload', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await expect(page.getByText('Preferences save automatically on this device.')).toBeVisible();
+  await page.getByRole('button', { name: 'Theme: Light', exact: true }).click();
+  await page.getByRole('button', { name: 'Theme: Dark', exact: true }).click();
+  await expect(page.locator('html')).toHaveCSS('color-scheme', 'dark');
+  await expect(page.getByRole('heading', { name: 'Preferences', exact: true })).toHaveCSS('color', 'rgb(189, 181, 204)');
+  await page.screenshot({ path: '.expo/screenshots/dark-settings.png' });
+  await expect(page.getByText('Preferences save automatically on this device.')).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Theme: Dark', exact: true })).toBeVisible();
+  await expect(page.locator('html')).toHaveCSS('color-scheme', 'dark');
+  await page.goto('/events/create');
+  await expect(page.getByRole('textbox').first()).toHaveCSS('background-color', 'rgb(30, 26, 41)');
+  await expect(page.getByRole('textbox').first()).toHaveCSS('color', 'rgb(243, 239, 250)');
+  await page.goto('/data');
+  await expect(page.getByText('Archive & Trash', { exact: true })).toHaveCSS('color', 'rgb(243, 239, 250)');
+  await expect(page.getByText('Restore adds copies', { exact: false })).toHaveCSS('color', 'rgb(243, 239, 250)');
+  await page.goto('/calendar');
+  const weekdays = page.getByText(/^(Sun|Mon|Tue|Wed|Thu|Fri|Sat)$/);
+  await expect(weekdays).toHaveCount(7);
+  for (const day of await weekdays.all()) await expect(day).toHaveCSS('color', 'rgb(243, 239, 250)');
+  await page.goto('/reminders');
+  await expect(page.getByText('These reminders appear', { exact: false })).toHaveCSS('color', 'rgb(243, 239, 250)');
+  await page.goto('/');
+  await expect(page.getByText('Your next great moment.')).toHaveCSS('color', 'rgb(243, 239, 250)');
+  await page.screenshot({ path: '.expo/screenshots/dark-home.png' });
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await page.getByRole('button', { name: 'Theme: Dark', exact: true }).click();
+  await page.getByRole('button', { name: 'Theme: Light', exact: true }).click();
+  await expect(page.locator('html')).toHaveCSS('color-scheme', 'light');
+  await expect(page.getByText('Preferences save automatically on this device.')).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Theme: Light', exact: true })).toBeVisible();
+  await page.goto('/data');
+  await expect(page.getByText('Archive & Trash', { exact: true })).toHaveCSS('color', 'rgb(33, 26, 53)');
+  await page.goto('/calendar');
+  for (const day of await weekdays.all()) await expect(day).toHaveCSS('color', 'rgb(33, 26, 53)');
+  expect(errors).toEqual([]);
+});
+
 test('settings persist across reloads and update the planning calendar', async ({ page }) => {
   const renderErrors = [];
   page.on('console', (message) => {

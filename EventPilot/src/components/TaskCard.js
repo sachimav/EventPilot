@@ -1,13 +1,16 @@
+import { useTheme } from '../hooks/useTheme';
 import { useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { tasks } from '../database';
 import { taskDeadline } from '../utils/taskManager';
-import { cardStyle, colors, spacing, typography } from '../constants/theme';
+import { spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
 import { getTaskStatus } from '../utils/taskDeadlines';
 import TaskStatusBadge from './TaskStatusBadge';
 import { showSuccess, showError } from '../utils/feedback';
 export default function TaskCard({ task, eventName, disabled, onEdit, onChange, now }) {
+  const theme = useTheme();
+  const { colors, cardStyle } = theme;
     const [details, setDetails] = useState(false);
     const [confirm, setConfirm] = useState(false);
     const [busy, setBusy] = useState(false);

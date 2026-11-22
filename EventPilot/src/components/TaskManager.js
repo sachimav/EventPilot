@@ -1,9 +1,10 @@
+import { useTheme } from '../hooks/useTheme';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { events, tasks } from '../database';
 import { useFocusQuery } from '../hooks/useFocusQuery';
 import { defaultTaskFilters, emptyTask, filterTasks, fromTask, priorityChoices } from '../utils/taskManager';
-import { colors, spacing, typography } from '../constants/theme';
+import { spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
 import ChoiceChips from './ChoiceChips';
 import EmptyState from './EmptyState';
@@ -11,12 +12,15 @@ import TaskCard from './TaskCard';
 import TaskForm from './TaskForm';
 import { useTaskClock } from '../hooks/useTaskClock';
 import { countTaskStatuses, taskStatusLabels } from '../utils/taskDeadlines';
-import { taskStatusStyles } from './TaskStatusBadge';
+import { getTaskStatusStyles } from './TaskStatusBadge';
 async function loadTasks() {
     const [eventRows, taskRows] = await Promise.all([events.list(), tasks.list()]);
     return { events: eventRows, tasks: taskRows };
 }
 export default function TaskManager({ initialEventId } = {}) {
+  const theme = useTheme();
+  const { colors } = theme;
+  const taskStatusStyles = getTaskStatusStyles(colors);
     const { data, loading, error, retry } = useFocusQuery(loadTasks);
     const [filters, setFilters] = useState({ ...defaultTaskFilters, event: initialEventId ? String(initialEventId) : 'all' });
     const [creating, setCreating] = useState(false);

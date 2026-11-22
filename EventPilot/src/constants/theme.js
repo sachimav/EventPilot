@@ -8,6 +8,11 @@ export const colors = {
   border: '#E6E3ED',
   danger: '#B4233B',
   disabled: '#E8E5EE',
+  onPrimary: '#FFFFFF',
+  success: '#16705A', successSoft: '#E6F5EE',
+  info: '#245AB5', infoSoft: '#EAF1FF',
+  warning: '#8A4B08', warningSoft: '#FFF1D6',
+  dangerSoft: '#FFF5F6', dangerBorder: '#F1B8C2',
 };
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 };
@@ -28,3 +33,22 @@ export const cardStyle = {
   borderColor: colors.border,
   padding: spacing.xl,
 };
+
+const darkColors = {
+  primary: '#BA9AFF', primarySoft: '#302444',
+  background: '#121019', surface: '#1E1A29',
+  heading: '#F3EFFA', text: '#BDB5CC', border: '#3C344B',
+  danger: '#FF91A4', disabled: '#302B3A', onPrimary: '#211331',
+  success: '#79D7B1', successSoft: '#163C30',
+  info: '#97BEFF', infoSoft: '#20324F',
+  warning: '#F2C475', warningSoft: '#44331C',
+  dangerSoft: '#421F2C', dangerBorder: '#804053',
+};
+
+export function createTheme(mode = 'light') {
+  const palette = mode === 'dark' ? darkColors : colors;
+  return {
+    dark: mode === 'dark', colors: palette,
+    cardStyle: { ...cardStyle, backgroundColor: palette.surface, borderColor: palette.border },
+  };
+}

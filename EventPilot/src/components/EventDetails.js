@@ -1,10 +1,11 @@
+import { useTheme } from '../hooks/useTheme';
 import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { events, tasks, subscribeTaskChanges } from '../database';
 import { useFocusQuery } from '../hooks/useFocusQuery';
 import { eventDate } from '../utils/eventForm';
-import { cardStyle, colors, spacing, typography } from '../constants/theme';
+import { spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
 import EventCard from './EventCard';
 import EmptyState from './EmptyState';
@@ -14,6 +15,8 @@ import QuickActions from './QuickActions';
 import { duplicateEvent } from '../database/planning';
 import { showSuccess, showError } from '../utils/feedback';
 export default function EventDetails({ id }) {
+  const theme = useTheme();
+  const { colors, cardStyle } = theme;
     const query = useCallback(async () => {
         if (id === null)
             return null;

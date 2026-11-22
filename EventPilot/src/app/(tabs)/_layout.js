@@ -1,9 +1,9 @@
+import { useTheme } from '../../hooks/useTheme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
 import { View } from 'react-native';
 import HeaderActions from '../../components/HeaderActions';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../../constants/theme';
 
 /** @type {Record<string, [import('react').ComponentProps<typeof Ionicons>['name'], import('react').ComponentProps<typeof Ionicons>['name']]>} */
 const icons = {
@@ -15,6 +15,8 @@ const icons = {
 };
 
 export default function TabLayout() {
+  const theme = useTheme();
+  const { colors } = theme;
   const insets = useSafeAreaInsets();
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.background }}>

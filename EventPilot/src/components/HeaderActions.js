@@ -1,10 +1,12 @@
+import { useTheme } from '../hooks/useTheme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, usePathname } from 'expo-router';
 import { Pressable, View } from 'react-native';
-import { colors } from '../constants/theme';
 import NotificationBell from './NotificationBell';
 
 export default function HeaderActions() {
+  const theme = useTheme();
+  const { colors } = theme;
   const pathname = usePathname();
   return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
     <NotificationBell />

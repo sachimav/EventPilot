@@ -1,15 +1,18 @@
+import { useTheme } from '../hooks/useTheme';
 import { useRef, useState } from 'react';
 import { Keyboard, Text, View } from 'react-native';
 import AppInput from './AppInput';
 import AppButton from './AppButton';
 import EventDateTimeField from './EventDateTimeField';
-import { cardStyle, colors, spacing } from '../constants/theme';
+import { spacing } from '../constants/theme';
 import { emptyEvent, toEventInput, validateEvent } from '../utils/eventForm';
 import { router } from 'expo-router';
 import ChoiceChips from './ChoiceChips';
 import EventConflictModal from './EventConflictModal';
 import { showError } from '../utils/feedback';
 export default function EventForm({ initialValues = emptyEvent, currency = 'LKR', onSave }) {
+  const theme = useTheme();
+  const { colors, cardStyle } = theme;
     const [values, setValues] = useState(initialValues);
     const [errors, setErrors] = useState({});
     const [error, setError] = useState('');

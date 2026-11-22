@@ -1,11 +1,15 @@
+import { useTheme, useThemedStyles } from '../hooks/useTheme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, radii, spacing, typography } from '../constants/theme';
+import { radii, spacing, typography } from '../constants/theme';
 import { eventIntervalLabel } from '../utils/eventConflicts';
 import AppButton from './AppButton';
 
 export default function EventConflictModal({ conflicts, onClose }) {
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useThemedStyles(createStyles);
   return <Modal visible={conflicts.length > 0} transparent animationType="fade" onRequestClose={onClose} accessibilityLabel="Event already scheduled">
     <SafeAreaView style={styles.overlay}>
       <View style={styles.card} accessibilityViewIsModal>
@@ -30,7 +34,7 @@ export default function EventConflictModal({ conflicts, onClose }) {
   </Modal>;
 }
 
-const styles = StyleSheet.create({
+const createStyles = ({ colors }) => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(25, 17, 45, 0.55)', justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
   card: { width: '100%', maxWidth: 440, maxHeight: '90%', backgroundColor: colors.surface, borderRadius: radii.lg, padding: spacing.xl, gap: spacing.md, elevation: 12, shadowColor: '#211A35', shadowOpacity: 0.18, shadowRadius: 24, shadowOffset: { width: 0, height: 12 } },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

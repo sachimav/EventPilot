@@ -1,3 +1,4 @@
+import { useTheme } from '../hooks/useTheme';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
@@ -6,9 +7,10 @@ import { fromEvent } from '../utils/eventForm';
 import EventForm from './EventForm';
 import EmptyState from './EmptyState';
 import AppButton from './AppButton';
-import { colors } from '../constants/theme';
 import { showSuccess } from '../utils/feedback';
 export default function EventEditor({ id }) {
+  const theme = useTheme();
+  const { colors } = theme;
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);

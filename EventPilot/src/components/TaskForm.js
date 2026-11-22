@@ -1,13 +1,16 @@
+import { useTheme } from '../hooks/useTheme';
 import { useRef, useState } from 'react';
 import { showSuccess, showError } from '../utils/feedback';
 import { Text, View } from 'react-native';
 import { emptyTask, priorityChoices, toTaskInput, validateTask } from '../utils/taskManager';
-import { cardStyle, colors, spacing, typography } from '../constants/theme';
+import { spacing, typography } from '../constants/theme';
 import AppInput from './AppInput';
 import AppButton from './AppButton';
 import ChoiceChips from './ChoiceChips';
 import EventDateTimeField from './EventDateTimeField';
 export default function TaskForm({ events, initialValues = emptyTask, editing = false, onSave, onCancel }) {
+  const theme = useTheme();
+  const { colors, cardStyle } = theme;
     const [values, setValues] = useState(initialValues);
     const [errors, setErrors] = useState({});
     const [error, setError] = useState('');

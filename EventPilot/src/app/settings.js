@@ -1,3 +1,4 @@
+import { useTheme, useThemedStyles } from '../hooks/useTheme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
@@ -7,18 +8,25 @@ import PlaceholderScreen from '../components/PlaceholderScreen';
 import AppButton from '../components/AppButton';
 import ChoiceChips from '../components/ChoiceChips';
 import { useSettings } from '../hooks/useSettings';
-import { colors, radii, spacing, typography } from '../constants/theme';
+import { radii, spacing, typography } from '../constants/theme';
 
 function Group({ title, children }) {
+  const styles = useThemedStyles(createStyles);
   return <View style={{ gap: spacing.sm }}><Text accessibilityRole="header" style={styles.section}>{title}</Text><View style={styles.group}>{children}</View></View>;
 }
 
 function Row({ icon, title, value, description, onPress, children, expanded }) {
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useThemedStyles(createStyles);
   const content = <><View style={styles.icon}><Ionicons name={icon} size={21} color={colors.primary} /></View><View style={{ flex: 1, gap: 3 }}><Text style={styles.label}>{title}</Text>{!!description && <Text style={styles.caption}>{description}</Text>}</View>{!!value && <Text style={styles.value}>{value}</Text>}{children}{onPress && <Ionicons name={expanded ? 'chevron-up' : 'chevron-forward'} size={18} color={colors.text} />}</>;
   return onPress ? <Pressable accessibilityRole="button" accessibilityLabel={`${title}${value ? `: ${value}` : ''}`} accessibilityState={expanded === undefined ? undefined : { expanded }} onPress={onPress} style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.primarySoft }]}>{content}</Pressable> : <View style={styles.row}>{content}</View>;
 }
 
 export default function SettingsScreen() {
+  const theme = useTheme();
+  const { colors } = theme;
+  const styles = useThemedStyles(createStyles);
   const { settings, ready, saving, error, update, retry } = useSettings();
   const [expanded, setExpanded] = useState('');
   const disabled = !ready || saving;
@@ -35,6 +43,7 @@ export default function SettingsScreen() {
     {!!error && <View style={styles.options}><Text accessibilityRole="alert" style={{ color: colors.danger }}>{error}</Text>{!ready && <AppButton title="Retry preferences" onPress={retry} />}</View>}
     {!ready && !error && <ActivityIndicator color={colors.primary} />}
     <Group title="Preferences">
+      {picker('theme', 'moon-outline', 'Theme', [{ value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }], 'Choose the appearance of EventPilot.')}
       {picker('timeFormat', 'time-outline', 'Time format', [{ value: 'system', label: 'System' }, { value: '12', label: '12-hour' }, { value: '24', label: '24-hour' }], 'Used in notifications and saved reminders.')}
       {picker('weekStart', 'calendar-number-outline', 'First day of the week', [{ value: 0, label: 'Sunday' }, { value: 1, label: 'Monday' }], 'Sets the layout of your planning calendar.')}
     </Group>
@@ -58,7 +67,7 @@ export default function SettingsScreen() {
   </PlaceholderScreen>;
 }
 
-const styles = StyleSheet.create({
+const createStyles = ({ colors }) => StyleSheet.create({
   section: { ...typography.label, color: colors.text, paddingHorizontal: spacing.sm },
   group: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radii.md, overflow: 'hidden' },
   row: { minHeight: 76, padding: spacing.lg, gap: spacing.md, flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },

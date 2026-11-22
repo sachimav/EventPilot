@@ -1,10 +1,11 @@
+import { useTheme } from '../hooks/useTheme';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { guests, vendors } from '../database';
 import { useFocusQuery } from '../hooks/useFocusQuery';
 import { budgetCents } from '../utils/eventForm';
 import { formatLkr, amountInput } from '../utils/budgetManager';
-import { cardStyle, colors, spacing, typography } from '../constants/theme';
+import { spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
 import AppInput from './AppInput';
 import ChoiceChips from './ChoiceChips';
@@ -12,6 +13,8 @@ import EmptyState from './EmptyState';
 import { showSuccess, showError } from '../utils/feedback';
 const blank = { name: '', email: '', phone: '', rsvp: 'invited', plus_ones: '0', dietary: '', service: '', contact: '', quote: '0', booking_status: 'inquiry', notes: '' };
 export default function PeopleManager({ eventId, kind }) {
+  const theme = useTheme();
+  const { colors, cardStyle } = theme;
     const guestMode = kind === 'guests';
     const noun = guestMode ? 'guest' : 'vendor';
     const query = useCallback(async () => guestMode ? guests.listByEvent(eventId) : vendors.listByEvent(eventId), [guestMode, eventId]);
@@ -117,13 +120,13 @@ export default function PeopleManager({ eventId, kind }) {
         <Text accessibilityRole="header" style={{ ...typography.heading, color: colors.heading }}>{row.name}</Text>
         <Text style={{ color: colors.text }}>{[row.email, row.phone].filter(Boolean).join(' · ') || 'No contact details added'}</Text>
         {'rsvp' in row ? <>
-          <Text>{row.rsvp} · {row.plus_ones} plus-ones · {row.checked_in ? 'Checked in' : 'Not checked in'}</Text>
-          {!!row.dietary && <Text>Dietary: {row.dietary}</Text>}
+          <Text style={{ color: colors.heading }}>{row.rsvp} · {row.plus_ones} plus-ones · {row.checked_in ? 'Checked in' : 'Not checked in'}</Text>
+          {!!row.dietary && <Text style={{ color: colors.heading }}>Dietary: {row.dietary}</Text>}
           <AppButton title={row.checked_in ? 'Undo check-in' : 'Check in guest'} disabled={busy || editor !== null} onPress={() => run(() => guests.update(row.id, { checked_in: row.checked_in ? 0 : 1 }), row.checked_in ? 'Guest check-in undone' : 'Guest checked in')}/>
-        </> : <Text>{row.service} · {row.booking_status} · {formatLkr(row.quoted_cents)}{row.contact ? ` · ${row.contact}` : ''}{row.notes ? `\n${row.notes}` : ''}</Text>}
+        </> : <Text style={{ color: colors.heading }}>{row.service} · {row.booking_status} · {formatLkr(row.quoted_cents)}{row.contact ? ` · ${row.contact}` : ''}{row.notes ? `\n${row.notes}` : ''}</Text>}
         <AppButton title={`Edit ${noun}`} variant="secondary" disabled={busy || editor !== null} onPress={() => edit(row)}/>
         {removeId === row.id ? <>
-          <Text accessibilityRole="alert">Permanently delete this {noun}?</Text>
+          <Text style={{ color: colors.heading }} accessibilityRole="alert">Permanently delete this {noun}?</Text>
           <AppButton title="Confirm deletion" variant="danger" disabled={busy} onPress={() => run(async () => {
                     const changed = guestMode ? await guests.delete(row.id) : await vendors.delete(row.id);
                     if (!changed) throw new Error('Record no longer exists.');

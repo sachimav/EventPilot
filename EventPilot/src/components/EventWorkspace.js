@@ -1,14 +1,17 @@
+import { useTheme } from '../hooks/useTheme';
 import { useCallback } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { events } from '../database';
 import { useFocusQuery } from '../hooks/useFocusQuery';
-import { colors, spacing, typography } from '../constants/theme';
+import { spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
 import EmptyState from './EmptyState';
 import TaskManager from './TaskManager';
 import BudgetManager from './BudgetManager';
 import PeopleManager from './PeopleManager';
 export default function EventWorkspace({ id, section }) {
+  const theme = useTheme();
+  const { colors } = theme;
     const query = useCallback(() => id === null ? Promise.resolve(null) : events.getById(id), [id]);
     const { data: event, loading, error, retry } = useFocusQuery(query);
     if (loading)

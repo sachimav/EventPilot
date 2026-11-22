@@ -1,11 +1,14 @@
+import { useTheme } from '../hooks/useTheme';
 import { useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { activities } from '../database';
 import { activityTimeRange } from '../utils/activityTimeline';
-import { cardStyle, colors, spacing, typography } from '../constants/theme';
+import { spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
 import { showSuccess, showError } from '../utils/feedback';
 export default function ActivityCard({ activity, disabled, onEdit, onChange }) {
+  const theme = useTheme();
+  const { colors, cardStyle } = theme;
     const [confirm, setConfirm] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [error, setError] = useState('');

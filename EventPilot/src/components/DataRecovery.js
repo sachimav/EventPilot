@@ -1,15 +1,18 @@
+import { useTheme } from '../hooks/useTheme';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { events, subscribeDataChanges } from '../database';
 import { exportBackup, parseBackup, restoreBackup } from '../database/backups';
 import { useFocusQuery } from '../hooks/useFocusQuery';
 import { readTextFile, saveTextFile } from '../utils/files';
-import { cardStyle, colors, spacing } from '../constants/theme';
+import { spacing } from '../constants/theme';
 import AppInput from './AppInput';
 import AppButton from './AppButton';
 import EmptyState from './EmptyState';
 import { showSuccess, showError } from '../utils/feedback';
 export default function DataRecovery() {
+  const theme = useTheme();
+  const { colors, cardStyle } = theme;
     const { data, retry } = useFocusQuery(events.inactive, subscribeDataChanges);
     const [text, setText] = useState('');
     const [confirm, setConfirm] = useState(false);
@@ -38,9 +41,9 @@ export default function DataRecovery() {
     <AppButton title="Download backup" disabled={busy} icon="download-outline" onPress={() => run(async () => { await saveTextFile('eventpilot-backup.json', await exportBackup(), 'application/json'); setMessage('Backup exported. Keep it in a safe place.'); }, 'Backup export ready')}/>
     <AppButton title="Choose backup file" variant="secondary" disabled={busy} onPress={() => run(async () => { const value = await readTextFile(); parseBackup(value); setText(value); setConfirm(false); setMessage('Backup validated. Review and confirm import below.'); }, 'Backup ready to import')}/>
     <AppInput label="Backup JSON" value={text} onChangeText={(value) => { setText(value); setConfirm(false); }} multiline editable={!busy}/>
-    <Text>Restore adds copies with new IDs and preserves existing data. Importing the same file twice creates duplicate events.</Text>
+    <Text style={{ color: colors.heading }}>Restore adds copies with new IDs and preserves existing data. Importing the same file twice creates duplicate events.</Text>
     {confirm ? <>
-      <Text accessibilityRole="alert">Import this backup? Existing events will be kept.</Text>
+      <Text style={{ color: colors.heading }} accessibilityRole="alert">Import this backup? Existing events will be kept.</Text>
       <AppButton title="Confirm import" disabled={busy} onPress={() => run(async () => { const count = await restoreBackup(text); setText(''); setConfirm(false); setMessage(`Imported ${count} records.`); }, 'Backup restored successfully')}/>
       <AppButton title="Cancel import" variant="secondary" disabled={busy} onPress={() => setConfirm(false)}/>
     </> : <AppButton title="Validate and restore" disabled={busy || !text} onPress={() => { try {
@@ -53,12 +56,12 @@ export default function DataRecovery() {
             showError('Invalid backup', 'Please select a compatible EventPilot backup.');
         } }}/>}
     {!!message && <Text accessibilityRole="alert" style={{ color: colors.primary }}>{message}</Text>}
-    <Text style={{ fontSize: 20, fontWeight: '600' }}>Archive & Trash</Text>
+    <Text style={{ color: colors.heading, fontSize: 20, fontWeight: '600' }}>Archive & Trash</Text>
     {!data?.length ? <EmptyState title="Nothing to recover" description="Archived and deleted events will appear here."/> : data.map((event) => <View key={event.id} style={{ ...cardStyle, gap: spacing.md }}>
-      <Text>{event.name} · {event.deleted_at ? 'Trash' : 'Archived'}</Text>
+      <Text style={{ color: colors.heading }}>{event.name} · {event.deleted_at ? 'Trash' : 'Archived'}</Text>
       <AppButton title="Restore event" disabled={busy} onPress={() => run(() => events.update(event.id, { archived_at: null, deleted_at: null }), 'Event restored')}/>
       {purge === event.id ? <>
-        <Text accessibilityRole="alert">This permanently deletes the event and all its related records.</Text>
+        <Text style={{ color: colors.heading }} accessibilityRole="alert">This permanently deletes the event and all its related records.</Text>
         <AppButton title="Permanently delete" variant="danger" disabled={busy} onPress={() => run(async () => { if (!await events.delete(event.id)) throw new Error('Event no longer exists.'); setPurge(null); }, 'Event permanently deleted')}/>
         <AppButton title="Keep event" variant="secondary" disabled={busy} onPress={() => setPurge(null)}/>
       </> : <AppButton title="Delete permanently" variant="danger" disabled={busy} onPress={() => setPurge(event.id)}/>}

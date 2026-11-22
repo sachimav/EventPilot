@@ -1,15 +1,18 @@
+import { useTheme } from '../hooks/useTheme';
 import { useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { dashboardRecordAnalytics, dashboardTaskAnalytics } from '../utils/dashboardAnalytics';
 import { formatLkr } from '../utils/budgetManager';
 import { getTaskStatus } from '../utils/taskDeadlines';
 import { taskDeadline } from '../utils/taskManager';
-import { cardStyle, colors, spacing, typography } from '../constants/theme';
+import { spacing, typography } from '../constants/theme';
 import AppButton from './AppButton';
 import StatCard from './StatCard';
 import EmptyState from './EmptyState';
 import TaskStatusBadge from './TaskStatusBadge';
 export default function DashboardInsights({ records, now }) {
+  const theme = useTheme();
+  const { colors, cardStyle } = theme;
     const analytics = useMemo(() => dashboardRecordAnalytics(records), [records]);
     const work = useMemo(() => dashboardTaskAnalytics(analytics.tasks, now), [analytics, now]);
     const completion = analytics.completion;
@@ -42,7 +45,7 @@ export default function DashboardInsights({ records, now }) {
     {analytics.warnings.length === 0 ? <EmptyState title={records.events.length ? 'No budget warnings' : 'Budgets start with an event'} description={records.expenses.length ? 'Recorded expenses are within their event budgets.' : 'Add expenses in Budget Manager to compare estimates and spending with each event budget.'} icon="wallet-outline"/>
             : <>
         <Text style={{ ...typography.caption, color: colors.text }}>{analytics.warnings.length} {analytics.warnings.length === 1 ? 'event needs' : 'events need'} a budget review.</Text>
-        {analytics.warnings.slice(0, 3).map(({ event, summary, kind }) => <View key={event.id} style={{ ...cardStyle, borderColor: kind === 'near-limit' ? colors.border : '#F1B8C2', gap: spacing.md }}>
+        {analytics.warnings.slice(0, 3).map(({ event, summary, kind }) => <View key={event.id} style={{ ...cardStyle, borderColor: kind === 'near-limit' ? colors.border : colors.dangerBorder, gap: spacing.md }}>
           <Text style={{ ...typography.heading, color: colors.heading }}>{event.name}</Text>
           <Text style={{ ...typography.label, color: kind === 'near-limit' ? colors.primary : colors.danger }}>
             {kind === 'overspent' ? `Over budget by ${formatLkr(summary.overspentAmount)}`
