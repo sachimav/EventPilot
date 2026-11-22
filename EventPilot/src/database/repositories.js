@@ -48,16 +48,19 @@ function repository(table, columns, updateCondition = '') {
             const { keys, values } = bindings(input);
             if (!keys.length)
                 throw new TypeError('Update requires at least one field.');
+            // Activating an archived/trashed/cancelled event must reserve its slot too.
+            const checksSchedule = table === 'Events' && (updateCondition ||
+                keys.some((key) => ['date', 'time', 'end_date', 'end_time', 'status', 'archived_at', 'deleted_at'].includes(key)));
             const write = async (db) => {
-                if (table === 'Events' && updateCondition) {
-                    const current = await db.getFirstAsync('SELECT * FROM Events WHERE id = ? AND deleted_at IS NULL', [id]);
+                if (checksSchedule) {
+                    const current = await db.getFirstAsync(`SELECT * FROM Events WHERE id = ?${updateCondition}`, [id]);
                     if (!current) return false;
                     await assertEventScheduleAvailable(db, { ...current, ...input }, id);
                 }
                 const result = await db.runAsync(`UPDATE ${table} SET ${keys.map((key) => `${key} = ?`).join(', ')}, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?${updateCondition}`, [...values, id]);
                 return result.changes > 0;
             };
-            const changed = table === 'Events' && updateCondition
+            const changed = checksSchedule
                 ? await withScheduledEventWrite(write) : await write(await initializeDatabase());
             if (table === 'Tasks' && changed)
                 notifyTaskChanges();

@@ -31,6 +31,19 @@ assert.equal(input.category, 'Birthday');
 assert.equal(input.location, 'Colombo');
 assert.equal(input.budget_cents, 12345);
 for (const time of ['24:00', '12:60', '9:00']) assert.ok(validateEvent({ ...values, time }).time);
+const previousTimezone = process.env.TZ;
+try {
+  process.env.TZ = 'America/New_York';
+  const transition = { ...values, date: '2027-03-14', time: '02:30' };
+  assert.ok(validateEvent(transition).time, 'Reject a nonexistent DST start time');
+  assert.throws(() => toEventInput(transition));
+  assert.ok(validateEvent({ ...transition, time: '01:30', endDate: transition.date, endTime: '02:30' }).endTime);
+  assert.equal(Object.keys(validateEvent({ ...transition, time: '01:30', endDate: transition.date, endTime: '03:00' })).length, 0);
+  assert.equal(Object.keys(validateEvent({ ...values, date: '2027-11-07', time: '01:30' })).length, 0, 'Repeated fall-back time remains valid');
+} finally {
+  if (previousTimezone === undefined) delete process.env.TZ;
+  else process.env.TZ = previousTimezone;
+}
 assert.throws(() => toEventInput(emptyEvent));
 assert.equal(fromEvent({ ...input, budget_cents: Number.MAX_SAFE_INTEGER }).budget, '90071992547409.91');
 assert.equal(parseEventId('12'), 12);

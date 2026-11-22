@@ -9,6 +9,7 @@ import { spacing } from '../constants/theme';
 import AppInput from './AppInput';
 import AppButton from './AppButton';
 import EmptyState from './EmptyState';
+import EventConflictModal from './EventConflictModal';
 import { showSuccess, showError } from '../utils/feedback';
 export default function DataRecovery() {
   const theme = useTheme();
@@ -19,6 +20,7 @@ export default function DataRecovery() {
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState('');
     const [purge, setPurge] = useState(null);
+    const [conflicts, setConflicts] = useState([]);
     async function run(action, successTitle) {
         if (busy) return;
         setBusy(true);
@@ -30,6 +32,11 @@ export default function DataRecovery() {
             if (successTitle) showSuccess(successTitle);
         }
         catch (error) {
+            if (error?.name === 'EventScheduleConflictError') {
+                setConflicts(error.conflicts);
+                setMessage('This event could not be restored because its time is already reserved. Reschedule or archive the conflicting event, then try restoring again.');
+                return;
+            }
             setMessage(error instanceof Error ? error.message : 'Unable to complete this action.');
             showError('Action could not be completed', error instanceof Error ? error.message : 'Please try again.');
         }
@@ -38,6 +45,7 @@ export default function DataRecovery() {
         }
     }
     return <View style={{ gap: spacing.lg }}>
+    <EventConflictModal conflicts={conflicts} onClose={() => setConflicts([])} restoring />
     <AppButton title="Download backup" disabled={busy} icon="download-outline" onPress={() => run(async () => { await saveTextFile('eventpilot-backup.json', await exportBackup(), 'application/json'); setMessage('Backup exported. Keep it in a safe place.'); }, 'Backup export ready')}/>
     <AppButton title="Choose backup file" variant="secondary" disabled={busy} onPress={() => run(async () => { const value = await readTextFile(); parseBackup(value); setText(value); setConfirm(false); setMessage('Backup validated. Review and confirm import below.'); }, 'Backup ready to import')}/>
     <AppInput label="Backup JSON" value={text} onChangeText={(value) => { setText(value); setConfirm(false); }} multiline editable={!busy}/>

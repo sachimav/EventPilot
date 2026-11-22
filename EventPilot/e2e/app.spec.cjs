@@ -100,6 +100,7 @@ test('regression: trashed event edit links require restore', async ({ page }) =>
   await expect(page.getByLabel('Title *', { exact: true })).toHaveCount(0);
   await page.getByRole('link', { name: 'Data & recovery', exact: true }).click();
   await page.getByRole('button', { name: 'Restore event', exact: true }).click();
+  await expect(page.getByText('Nothing to recover', { exact: true })).toBeVisible();
   await page.goto(`${eventPath}/edit`);
   await expect(page.getByLabel('Title *', { exact: true })).toHaveValue('Trash guard event');
 });
@@ -186,7 +187,7 @@ test('mobile: all event workspaces persist and their controls work', async ({ pa
   await page.getByRole('link', { name: 'Edit event', exact: true }).click();
   await page.getByLabel('Title *', { exact: true }).fill('December party');
   await page.getByRole('button', { name: 'Save event', exact: true }).click();
-  await expect(page.getByText('December party', { exact: true })).toBeVisible();
+  await expect(page.getByText('December party', { exact: true }).and(page.locator(':not([data-testid="action-feedback"] *)'))).toBeVisible();
   await page.goto('/');
   await expect(page.getByText('December party', { exact: true }).first()).toBeVisible();
   await page.screenshot({ path: '.expo/screenshots/home-mobile.png', fullPage: true });
@@ -326,10 +327,19 @@ for (const mode of ['light', 'dark']) test(`planning tools (${mode}): guests, ve
   await expect(page.getByText(/^Imported \d+ records\.$/)).toBeVisible();
   await page.goto('/events');
   await expect(page.getByRole('link', { name: 'View Full planning event', exact: true })).toHaveCount(2);
+  // Import intentionally creates a duplicate plan; move it before restoring the original slot.
+  await page.getByRole('link', { name: 'View Full planning event', exact: true }).first().click();
+  await page.getByRole('link', { name: 'Edit event', exact: true }).click();
+  await page.getByLabel('Date *', { exact: true }).fill('2026-12-21');
+  await page.getByLabel('End date (optional)', { exact: true }).fill('2026-12-21');
+  await page.getByRole('button', { name: 'Save event', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Event tasks', exact: true })).toBeVisible();
   await page.goto(eventPath);
   await page.getByRole('button', { name: 'Archive event', exact: true }).click();
+  await expect(page).toHaveURL(/\/events$/);
   await page.goto('/data');
   await page.getByRole('button', { name: 'Restore event', exact: true }).click();
+  await expect(page.getByText('Nothing to recover', { exact: true })).toBeVisible();
   await page.goto(eventPath);
   await expect(page.getByRole('link', { name: 'Event guests', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Duplicate event', exact: true }).click();

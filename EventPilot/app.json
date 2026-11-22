@@ -22,7 +22,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-router",
+      ["expo-router", { "asyncRoutes": false }],
       "expo-status-bar",
       "expo-sqlite",
       "@react-native-community/datetimepicker"
